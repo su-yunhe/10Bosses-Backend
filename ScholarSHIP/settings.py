@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     "academic",
     "dataAnalysis",
     "author",
-    "SearchManager"
+    "SearchManager",
+    "enterprise",
+    "recruit",
 ]
 
 MIDDLEWARE = [
@@ -172,3 +174,10 @@ STATICFILES_DIRS = [
 
 # 新增项。静态文件收集目录
 STATIC_ROOT = os.path.join(BASE_DIR, "collected_static")
+
+
+# 文件保存
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
