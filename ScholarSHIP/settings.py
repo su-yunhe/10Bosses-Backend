@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+
 import os
 from pathlib import Path
 
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     "dataAnalysis",
     "author",
     "SearchManager",
+    "Users",
     "enterprise",
     "recruit",
 ]
@@ -178,9 +180,8 @@ USE_TZ = True
 
 
 # 文件保存
-MEDIA_URL = '/media/'
+MEDIA_URL = "/media/"
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Haystack配置
 HAYSTACK_CONNECTIONS = {
@@ -192,3 +193,5 @@ HAYSTACK_CONNECTIONS = {
 
 # 配置Haystack的信号处理器，以便在模型更改时自动更新索引
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
