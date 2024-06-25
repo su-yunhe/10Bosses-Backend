@@ -8,4 +8,6 @@ urlpatterns = [
     path("get_single_applicant", get_single_applicant),
     path("user_modify_info", user_modify_info),
     path("search_user", search_user),
+    path("interest_add", interest_add),
+    path("upload/", upload_pdf),
 ]
