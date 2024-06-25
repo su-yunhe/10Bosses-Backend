@@ -12,3 +12,8 @@ class Enterprise(models.Model):
     member = models.ManyToManyField(User, related_name='member_enterprise')
     manager = models.ForeignKey('user.User', on_delete=CASCADE, null=False)  # 公司管理人
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = "enterprise_enterprise"
