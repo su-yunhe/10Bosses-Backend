@@ -6,4 +6,6 @@ urlpatterns = [
     path("applicant_login", login),
     path("user_modify_background", user_modify_background),
     path("get_single_applicant", get_single_applicant),
+    path("user_modify_info", user_modify_info),
+    path("search_user", search_user),
 ]
