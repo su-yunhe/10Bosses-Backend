@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from ast import List
 import json
 from django import forms
@@ -8,8 +7,14 @@ import re
 
 from django.utils import timezone
 import requests
+from recruit.models import *
 from utils.token import create_token
 from .models import *
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from .serializers import DocumentSerializer
 
 
 class RegisterForm(forms.Form):
@@ -138,11 +143,18 @@ def get_single_applicant(request):
     if request.method == "POST":
         userid = request.POST.get("userId")
         results = list(Applicant.objects.filter(id=userid).values())
-
+        interests = list(Position.objects.filter(id=userid).values())
         if not results:  # 如果查询结果为空
             return JsonResponse({"error": 1001, "msg": "查无此人"})
 
-        return JsonResponse({"error": 0, "msg": "获取用户信息成功", "results": results})
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户信息成功",
+                "results": results,
+                "interests": interests,
+            }
+        )
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
@@ -155,7 +167,28 @@ def interest_add(request):
         new_position = Position()
         new_position.user_id = userid
         new_position.recruit_id = recruitid
+        temp = Recruit()
+        temp = Recruit.objects.get(id=recruitid)
+        new_position.recruit_name = temp.post
         new_position.save()
-        return JsonResponse({"error": 0, "msg": "建立项目成功"})
+        return JsonResponse({"error": 0, "msg": "添加意向岗位成功"})
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt  # 可以用于简化 CSRF 保护
+def upload_pdf(request):
+    if request.method == "POST" and request.FILES["note"]:
+        pdf_file = request.FILES["note"]
+
+        # 处理上传的文件，比如保存到磁盘或者存储到数据库
+        # 这里仅示例保存到媒体文件夹中
+        with open("media/" + pdf_file.name, "wb+") as destination:
+            for chunk in pdf_file.chunks():
+                destination.write(chunk)
+
+        return JsonResponse(
+            {"status": "success", "message": "File uploaded successfully"}
+        )
+    else:
+        return JsonResponse({"status": "fail", "message": "File upload failed"})
