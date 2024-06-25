@@ -124,6 +124,15 @@ def login(request):
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
+@csrf_exempt
+def test_for_api(request):
+    if request.method == "POST":
+        key = request.POST.get("key")
+        print(key)
+        user_list = list(User.objects.filter(user_name__icontains=key).values())
+        return JsonResponse({"errno": 0, "msg": "OK", "data": {"user_list": user_list}})
+    else:
+        return JsonResponse({"errno": 4001, "msg": "请求方式错误"})
 
 @csrf_exempt
 def get_user_info(request):

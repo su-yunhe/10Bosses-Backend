@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "haystack",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -167,19 +168,31 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = "/static/"
+# STATIC_URL = "/static/"
 
 # 修改项。指定需要收集的静态文件的位置
 # 即前端打包文件所在位置
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "frontend/dist/"),
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "frontend/dist/"),
+# ]
 
 # 新增项。静态文件收集目录
-STATIC_ROOT = os.path.join(BASE_DIR, "collected_static")
+#STATIC_ROOT = os.path.join(BASE_DIR, "collected_static")
 
 
 # 文件保存
 MEDIA_URL = "/media/"
+
+
+# Haystack配置
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'enterprise.whoosh_cn_backend.WhooshEngine',
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    },
+}
+
+# 配置Haystack的信号处理器，以便在模型更改时自动更新索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")

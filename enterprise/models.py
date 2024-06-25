@@ -17,3 +17,8 @@ class Enterprise(models.Model):
     # apply_uaer_material = models.ManyToManyField(Material, related_name='apply_user_material')
     manager = models.ForeignKey(Applicant, on_delete=CASCADE, null=False)  # 公司管理人
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = "enterprise_enterprise"

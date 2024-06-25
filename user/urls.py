@@ -28,4 +28,5 @@ urlpatterns = [
     path("judge_scholar", judge_scholar),
     path("judge_authenticated", judge_authenticated),
     path("scholar_get_user", scholar_get_user),
+    path("test_for_api", test_for_api)
 ]

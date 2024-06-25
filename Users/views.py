@@ -1,20 +1,18 @@
-from ast import List
-import json
+
 from django import forms
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import re
 
+
+from enterprise.models import Enterprise
 from django.utils import timezone
 import requests
 from recruit.models import *
+
 from utils.token import create_token
 from .models import *
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
-from .serializers import DocumentSerializer
+
 
 
 class RegisterForm(forms.Form):
@@ -176,6 +174,67 @@ def interest_add(request):
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
+
+# 用户修改个人信息
+@csrf_exempt
+def user_modify_info(request):
+    if request.method == 'POST':
+        userid = request.POST.get("userId")
+        user = Applicant.objects.get(id=userid)
+        new_name = request.POST.get("name")
+        if new_name:
+            user.user_name = new_name
+        new_password = request.POST.get("password")
+        if new_password:
+            user.password = new_password
+        new_email = request.POST.get("email")
+        if new_email:
+            user.email = new_email
+        new_background = request.POST.get("background")
+        if new_background:
+            user.background = new_background
+        user.save()
+        return JsonResponse({"error": 0, "msg": "修改信息成功"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+# 用户注销
+@csrf_exempt
+def user_delete(request):
+    if request.method == 'POST':
+        userid = request.POST.get("userId")
+        # 先在applicant表中直接删除
+        user = Applicant.objects.get(id=userid)
+        user.delete()
+        # 如果管理了某个企业，则该企业自动解散
+        if user.manage_enterprise_id != 0:
+            manage_enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
+            manage_enterprise.delete()
+        # 如果在某个企业中，则该企业删除该员工
+        if user.enterprise_id != 0:
+            # TODO
+            enterprise = 0
+
+        return JsonResponse({"error": 0, "msg": "用户注销成功"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+# 游客查询用户(精准查询，可改成模糊查询）
+@csrf_exempt
+def search_user(request):
+    if request.method == 'POST':
+        name = request.POST.get("name")
+        if Applicant.objects.get(user_name=name):
+            results = list(Applicant.objects.filter(user_name=name).values('user_name', 'email', 'background'))
+            return JsonResponse({"error": 0, "msg": "查询成功", "results": results})
+        else:
+            return JsonResponse({"error": 1001, "msg": "该用户不存在"})
+
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
 @csrf_exempt  # 可以用于简化 CSRF 保护
 def upload_pdf(request):
     if request.method == "POST" and request.FILES["note"]:
@@ -192,3 +251,4 @@ def upload_pdf(request):
         )
     else:
         return JsonResponse({"status": "fail", "message": "File upload failed"})
+
