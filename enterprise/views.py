@@ -56,12 +56,26 @@ def search_enterprise(request):
 
 @csrf_exempt
 def get_enterprise_recruitment(request):
+    # 获取企业招聘信息
     if request.method == 'POST':
         enterprise_id = request.POST.get('enterprise_id')
-        recruitment_list = list(Enterprise.objects.values(enterprise_id=enterprise_id).get(id=enterprise_id))
+        print(enterprise_id)
+        recruitment_list = list(Recruit.objects.values().filter(enterprise_id=enterprise_id))
         return JsonResponse({"errno": 0, "msg": "获取企业招聘信息成功", "data": recruitment_list})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
 
+@csrf_exempt
+def get_intended_recruitment(request):
+    # 获取用户感兴趣的招聘信息
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+        # 用户存在 获取意向岗位
+        user_intended_position = Applicant.objects.get(id=user_id).interests
+        recruitment_list = list(Recruit.objects.values().filter(post=user_intended_position))
+        return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": recruitment_list})
+    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
 
 @csrf_exempt
 def creat_enterprise(request):
