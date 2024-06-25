@@ -11,5 +11,7 @@ class Enterprise(models.Model):
     picture = models.ImageField(upload_to='enterprise/', max_length=225, blank=True, null=True)
     address = models.TextField(default="")
     member = models.ManyToManyField(Applicant, related_name='member_enterprise')
+    fans = models.ManyToManyField(Applicant, related_name='user_like_enterprise')
+    fan = models.IntegerField(default=0)
     manager = models.ForeignKey('user.User', on_delete=CASCADE, null=False)  # 公司管理人
 

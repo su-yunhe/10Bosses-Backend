@@ -10,6 +10,31 @@ from Users.models import Applicant
 
 
 @csrf_exempt
+def creat_enterprise(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.data.get('user_id')
+        name = request.data.get('name')
+        profile = request.data.get('profile')
+        picture = request.FILES['picture']
+        address = request.data.get('address')
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if user.manage_enterprise_id != 0 or user.enterprise_id != 0:
+            return JsonResponse({'errno': 7004, 'msg': "该用户非管理员"})
+        # 创建实体
+        enterprise = Enterprise.objects.create(name=name, profile=profile, picture=picture, address=address)
+        user.manage_enterprise_id = enterprise.id
+        user.enterprise_id = enterprise.id
+        user.save()
+        return JsonResponse({'error': 0, 'msg': '创建成功'})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
 def show_enterprise(request):
     if request.method == "POST":
         # 获取请求内容
