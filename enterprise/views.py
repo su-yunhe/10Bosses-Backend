@@ -4,7 +4,6 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Enterprise
-from user.models import User
 from recruit.models import Recruit
 from haystack.forms import ModelSearchForm
 from haystack.query import EmptySearchQuerySet, SearchQuerySet
@@ -31,12 +30,13 @@ def search_enterprise(request):
                 results = Enterprise.objects.filter(name__icontains=search_name)
                 for enterprise in results:
                     search_results.add(enterprise.id)
+            print(search_results)
             results = list()
             for enterprise_id in search_results:
                 enterprise = Enterprise.objects.values().get(id=enterprise_id)
                 # 通过企业管理员id获取其真实姓名
                 manager_id = Enterprise.objects.get(id=enterprise_id).manager_id
-                manager_name = User.objects.get(id=manager_id).real_name
+                manager_name = Applicant.objects.get(id=manager_id).user_name
                 # 修改字段
                 enterprise["manager_name"] = manager_name
                 del enterprise["manager_id"]
