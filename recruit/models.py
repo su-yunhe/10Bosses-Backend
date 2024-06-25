@@ -1,7 +1,8 @@
 from django.db import models
 from django.db.models import CASCADE
 
-from user.models import User
+from Users.models import Applicant
+import json
 
 
 # Create your models here.
@@ -21,8 +22,8 @@ class Recruit(models.Model):
 class Material(models.Model):
     id = models.AutoField(primary_key=True)  # id 主键
     status = models.CharField(max_length=20, default='waiting', null=False)
-    Recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=False)
-    user = models.ForeignKey('user.User', on_delete=CASCADE, null=False)
+    recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=False)      # 3 待审核 2 已通过 1 已录用 0 未通过
+    user = models.ForeignKey('Users.Applicant', on_delete=CASCADE, null=False)
     name = models.CharField(max_length=128, default="")  # 真实姓名
     email = models.EmailField(default="")  # 邮箱
     phone = models.CharField(max_length=30, default="")  # 电话
@@ -35,6 +36,25 @@ class Material(models.Model):
     school = models.CharField(max_length=128, default="")  # 学校
     curriculum_vitae = models.FileField(upload_to='material_curriculum/')  # 电子简历
     certificate = models.FileField(upload_to='certificate/')  # 证书
+
+    def to_json(self):     # 少简历和证书
+        info = {
+            "material_id": self.id,
+            "material_status": self.status,
+            "material_user_id": self.user.id,
+            "material_user_name": self.user.user_name,
+            "material_user_real_name": self.name,
+            "material_user_gender": self.gender,
+            "material_user_native_place": self.native_place,
+            "material_user_nationality": self.nationality,
+            "material_user_birthday": self.birthday,
+            "material_user_marriage": self.marriage,
+            "material_user_email": self.email,
+            "material_user_phone": self.phone,
+            "material_user_education": self.education,
+            "material_user_school": self.school,
+        }
+        return json.dumps(info)
 
 
 
