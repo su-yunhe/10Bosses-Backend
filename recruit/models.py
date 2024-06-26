@@ -19,13 +19,19 @@ class Recruit(models.Model):
     user_material = models.ManyToManyField('Material', related_name='application_material') # 申请材料列表
     # employment = models.ManyToManyField(User, related_name='employment_recruit_user')
     release_time = models.DateField(auto_now_add=True)  # 发布时间
-    education = models.CharField(max_length=30, default="")  # 最低学历要求
+    experience = models.CharField(max_length=128, default="无要求")  # 工作经验
+    address = models.CharField(max_length=128, default="")  # 工作地点
+    requirement = models.TextField(default="无要求")  # 工作要求
+    education = models.CharField(max_length=30, default="无要求")  # 最低学历要求
 
 
 class Material(models.Model):
     id = models.AutoField(primary_key=True)  # id 主键
-    status = models.CharField(max_length=20, default='waiting', null=False)
-    recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=False)      # 3 待审核 2 已通过 1 已录用 0 未通过
+    status = models.CharField(max_length=20, default='3', null=False)      # 3 待审核 2 已通过 1 已录用 0 未通过
+    recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=True)
+    # enterprise = models.ForeignKey('Enterprise', on_delete=CASCADE, null=True)
+    # submit_time = models.DateField(auto_now_add=True)
+
     user = models.ForeignKey('Users.Applicant', on_delete=CASCADE, null=False)
     name = models.CharField(max_length=128, default="")  # 真实姓名
     email = models.EmailField(default="")  # 邮箱
@@ -37,8 +43,8 @@ class Material(models.Model):
     gender = models.CharField(max_length=30, default="")  # 性别
     education = models.CharField(max_length=30, default="")  # 学历
     school = models.CharField(max_length=128, default="")  # 学校
-    curriculum_vitae = models.FileField(upload_to='material_curriculum/')  # 电子简历
-    certificate = models.FileField(upload_to='certificate/')  # 证书
+    curriculum_vitae = models.FileField(upload_to='material_curriculum/', blank=True)  # 电子简历
+    certificate = models.FileField(upload_to='certificate/', blank=True)  # 证书
 
     def to_json(self):     # 少简历和证书
         info = {

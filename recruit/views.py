@@ -19,9 +19,12 @@ def publish_recruitment(request):
         post = request.POST.get('post')
         profile = request.POST.get('profile')
         number = request.POST.get('number')
-        education = request.POST.get('education')
-        salary_low = request.POST.get('salary_low')
-        salary_high = request.POST.get('salary_high')
+        education = request.POST.get('education', None)
+        salary_low = request.POST.get('salary_low', None)
+        salary_high = request.POST.get('salary_high', None)
+        address = request.POST.get('address', None)
+        experience = request.POST.get('experience', None)
+        requirement = request.POST.get('requirement', None)
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
              return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
@@ -32,12 +35,38 @@ def publish_recruitment(request):
         if not Enterprise.objects.filter(id=user.manage_enterprise_id).exists():
             return JsonResponse({'error': 8004, 'msg': "操作企业不存在"})
         enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
-        if int(salary_low) > int(salary_high) or int(salary_low) < 0:
-            return JsonResponse({'error': 8005, 'msg': "薪资设置错误"})
         if int(number) <= 0:
             return JsonResponse({'error': 8007, 'msg': "需求人数设置错误"})
+        if salary_high and salary_low:
+            if int(salary_low) > int(salary_high) or int(salary_low) < 0:
+                return JsonResponse({'error': 8005, 'msg': "薪资设置错误"})
+        elif salary_low:
+            if int(salary_low) < 0:
+                return JsonResponse({'error': 8005, 'msg': "薪资设置错误"})
+        elif salary_high:
+            if int(salary_high) < 0:
+                return JsonResponse({'error': 8005, 'msg': "薪资设置错误"})
         # 创建实体
-        recruit = Recruit.objects.create(enterprise=enterprise, post=post, profile=profile, number=number, education=education, salary_low=salary_low, salary_high=salary_high)
+        recruit = Recruit.objects.create(enterprise=enterprise, post=post, profile=profile, number=number)
+        if address:
+            recruit.address = address
+        else:
+            recruit.address = recruit.enterprise.address
+        if experience:
+            recruit.experience = experience
+        if requirement:
+            recruit.requirement = requirement
+        if education:
+            recruit.education = education
+        if salary_high and salary_low:
+            recruit.salary_low = salary_low
+            recruit.salary_high = salary_high
+        elif salary_low:
+            recruit.salary_low = salary_low
+            recruit.salary_high = salary_low
+        elif salary_high:
+            recruit.salary_high = salary_high
+        recruit.save()
         enterprise.recruitment.add(recruit)
         return JsonResponse({'error': 0, 'msg': recruit.id})
 
@@ -58,7 +87,7 @@ def show_recruitment(request):
                 "enterprise_manager_id": recruit.enterprise.manager.id, "enterprise_manager_name": recruit.enterprise.manager.user_name,
                 "recruit_id": recruit.id, "recruit_post": recruit.post, "recruit_profile": recruit.profile, "recruit_status": recruit.status,
                 "recruit_number": recruit.number, "recruit_release_time": recruit.release_time, "recruit_education": recruit.education,
-                "salary_low": recruit.salary_low, "salary_high": recruit.salary_high, "address": recruit.enterprise.address}
+                "salary_low": recruit.salary_low, "salary_high": recruit.salary_high, "address": recruit.address, "experience": recruit.experience, "requirement": recruit.requirement}
         return JsonResponse({'error': 0, 'data': data})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
@@ -76,6 +105,10 @@ def update_recruitmrnt(request):
         education = request.POST.get('education', None)
         salary_low = request.POST.get('salary_low', None)
         salary_high = request.POST.get('salary_high', None)
+        address = request.POST.get('address', None)
+        experience = request.POST.get('experience', None)
+        requirement = request.POST.get('requirement', None)
+
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
              return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
@@ -112,6 +145,12 @@ def update_recruitmrnt(request):
             if int(recruit.salary_low) > int(salary_high):
                 return JsonResponse({'error': 8005, 'msg': "薪资设置错误"})
             recruit.salary_high = salary_high
+        if experience:
+            recruit.experience = experience
+        if requirement:
+            recruit.requirement = requirement
+        if address:
+            recruit.address = address
         recruit.save()
         return JsonResponse({'error': 0, 'msg': '修改成功'})
 
