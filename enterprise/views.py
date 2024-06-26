@@ -17,7 +17,7 @@ from Users.models import Applicant
 
 
 @csrf_exempt
-def search_enterprise(request):
+def enterprise_search(request):
     if request.method == 'POST':
         query = (request.POST.get('q', ''))  # 从POST请求中获取查询参数
         if query:
@@ -92,24 +92,6 @@ def get_enterprise_recruitment(request):
             enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
             recruitment["enterprise_name"] = enterprise_name
         return JsonResponse({"errno": 0, "msg": "获取企业招聘信息成功", "data": recruitment_list})
-    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
-
-
-@csrf_exempt
-def get_intended_recruitment(request):
-    # 获取用户感兴趣的招聘信息
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
-        # 用户存在 获取意向岗位
-        user_intended_position = Applicant.objects.get(id=user_id).interests
-        recruitment_list = list(Recruit.objects.values().filter(post=user_intended_position))
-        for recruitment in recruitment_list:
-            rec_enter_id = recruitment["enterprise_id"]
-            enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
-            recruitment["enterprise_name"] = enterprise_name
-        return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": recruitment_list})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
 
 
