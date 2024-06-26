@@ -178,7 +178,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 
 
-# Haystack配置
+# Haystack配置（搜索部分）
 HAYSTACK_CONNECTIONS = {
     "default": {
         "ENGINE": "enterprise.whoosh_cn_backend.WhooshEngine",
