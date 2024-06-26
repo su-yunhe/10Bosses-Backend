@@ -190,6 +190,9 @@ def get_intended_recruitment(request):
             return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
         # 用户存在 获取意向岗位
         position_list = list(Position.objects.filter(user_id=user_id))
+        if not position_list:
+            # 该用户还没有填写意向岗位
+            return JsonResponse({'errno': 1001, 'msg': "用户还没有填写意向岗位"})
         results = list()
         for position in position_list:
             recruitment_list = list(Recruit.objects.values().filter(post=position.recruit_name))
@@ -198,5 +201,9 @@ def get_intended_recruitment(request):
                 enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
                 recruitment["enterprise_name"] = enterprise_name
                 results.append(recruitment)
-        return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": results})
+        if results:
+            return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": results})
+        else:
+            # 还没有企业在这些岗位招聘
+            return JsonResponse({"errno": 1002, "msg": "当前还没有这些岗位的招聘信息"})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})

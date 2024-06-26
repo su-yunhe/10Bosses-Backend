@@ -96,13 +96,16 @@ def get_enterprise_recruitment(request):
 
 @csrf_exempt
 def recommend_enterprise(request):
-    # 根据用户意向岗位推荐企业供用户关注
+    # 根据用户意向岗位推荐企业供用户关注（只在用户填写意向后调用）
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         if not Applicant.objects.filter(id=user_id).exists():
             return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
         # 用户存在 获取意向岗位
         position_list = list(Position.objects.filter(user_id=user_id))
+        if not position_list:
+            # 该用户还没有填写意向岗位
+            return JsonResponse({'errno': 1001, 'msg': "用户还没有填写意向岗位"})
         enterprise_id_set = set()
         for position in position_list:
             recruitment_list = list(Recruit.objects.values().filter(post=position.recruit_name))
@@ -113,7 +116,9 @@ def recommend_enterprise(request):
         for ent_id in enterprise_id_set:
             enterprise = Enterprise.objects.values().get(id=ent_id)
             results.append(enterprise)
-        return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的企业成功", "data": results})
+        if results:
+            return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的企业成功", "data": results})
+        return JsonResponse({"errno": 0, "msg": "当前还没有企业招聘这些岗位的员工"})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
 
 
