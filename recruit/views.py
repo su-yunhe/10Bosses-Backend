@@ -1,3 +1,4 @@
+import jieba
 from django.views.decorators.csrf import csrf_exempt
 import base64
 from django.http import JsonResponse
@@ -6,8 +7,9 @@ from enterprise.models import Enterprise
 from io import BytesIO
 from PIL import Image
 import json
-from Users.models import Applicant
+from Users.models import Applicant, Position
 from recruit.models import Recruit, Material
+
 
 @csrf_exempt
 def publish_recruitment(request):
@@ -167,3 +169,71 @@ def show_material_single(request):
         return JsonResponse({'error': 0, 'data': material.to_json()})
 
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def recruitment_search(request):
+    if request.method == "POST":
+        query = (request.POST.get('q', ''))
+        if query:
+            # jieba拆分搜索关键字
+            search_list = jieba.cut_for_search(query)
+            search_results = set()  # 使用Set防止重复
+            for search_name in search_list:
+                if not search_name.strip():  # 跳过空字符串
+                    continue
+                # 进行模糊搜索
+                # 调用whoosh引擎进行搜索
+                # sqs = SearchQuerySet().filter(content=search_name)
+                # for result in sqs:
+                #     search_results.add(result.object.id)
+
+                # 直接使用数据库模糊匹配
+                results = Recruit.objects.filter(post__icontains=search_name)
+                for recruitment in results:
+                    search_results.add(recruitment.id)
+            recruitments = list()
+            for recruitment_id in search_results:
+                recruitment = Recruit.objects.values().get(id=recruitment_id)
+                rec_enter_id = recruitment["enterprise_id"]
+                enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+                recruitment["enterprise_name"] = enterprise_name
+                recruitments.append(recruitment)
+            return JsonResponse({'results': recruitments}, status=200)
+        else:
+            # 用户没有提供关键词
+            recruitments = list(Recruit.objects.values().all())
+            for recruitment in recruitments:
+                rec_enter_id = recruitment["enterprise_id"]
+                enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+                recruitment["enterprise_name"] = enterprise_name
+            return JsonResponse({'results': recruitments}, status=200)
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_intended_recruitment(request):
+    # 获取用户感兴趣的招聘信息
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+        # 用户存在 获取意向岗位
+        position_list = list(Position.objects.filter(user_id=user_id))
+        if not position_list:
+            # 该用户还没有填写意向岗位
+            return JsonResponse({'errno': 1001, 'msg': "用户还没有填写意向岗位"})
+        results = list()
+        for position in position_list:
+            recruitment_list = list(Recruit.objects.values().filter(post=position.recruit_name))
+            for recruitment in recruitment_list:
+                rec_enter_id = recruitment["enterprise_id"]
+                enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+                recruitment["enterprise_name"] = enterprise_name
+                results.append(recruitment)
+        if results:
+            return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": results})
+        else:
+            # 还没有企业在这些岗位招聘
+            return JsonResponse({"errno": 1002, "msg": "当前还没有这些岗位的招聘信息"})
+    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})

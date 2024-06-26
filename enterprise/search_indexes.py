@@ -1,7 +1,7 @@
 from haystack import indexes
 from .models import Enterprise
 
-
+# whoosh搜索的索引文件
 class EnterpriseIndex(indexes.SearchIndex, indexes.Indexable):
     # text为索引字段
     # document = True，这代表haystack和搜索引擎将使用此字段的内容作为索引进行检索
@@ -9,8 +9,8 @@ class EnterpriseIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     name = indexes.CharField(model_attr='name')
 
-    # 对那张表进行查询
-    def get_model(self):  # 重载get_model方法，必须要有！
+    # 对Enterprise表进行查询
+    def get_model(self):  # 重载get_model方法
         # 返回这个model
         return Enterprise
 

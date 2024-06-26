@@ -9,5 +9,6 @@ urlpatterns = [
     path("user_modify_info", user_modify_info),
     path("search_user", search_user),
     path("interest_add", interest_add),
+    path("user_logout", user_delete),
     path("upload/", upload_pdf),
 ]
