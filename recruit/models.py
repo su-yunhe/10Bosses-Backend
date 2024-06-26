@@ -31,18 +31,17 @@ class Material(models.Model):
     recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=True)
     # enterprise = models.ForeignKey('Enterprise', on_delete=CASCADE, null=True)
     # submit_time = models.DateField(auto_now_add=True)
-
+    # name = models.CharField(max_length=128, default="")  # 真实姓名
+    # email = models.EmailField(default="")  # 邮箱
+    # phone = models.CharField(max_length=30, default="")  # 电话
+    # native_place = models.CharField(max_length=128, default="")  # 籍贯
+    # nationality = models.CharField(max_length=128, default="")  # 民族
+    # birthday = models.DateField(default=None, blank=True, null=True)  # 生日
+    # marriage = models.BooleanField(default=False)  # 婚姻状态
+    # gender = models.CharField(max_length=30, default="")  # 性别
+    # education = models.CharField(max_length=30, default="")  # 学历
+    # school = models.CharField(max_length=128, default="")  # 学校
     user = models.ForeignKey('Users.Applicant', on_delete=CASCADE, null=False)
-    name = models.CharField(max_length=128, default="")  # 真实姓名
-    email = models.EmailField(default="")  # 邮箱
-    phone = models.CharField(max_length=30, default="")  # 电话
-    native_place = models.CharField(max_length=128, default="")  # 籍贯
-    nationality = models.CharField(max_length=128, default="")  # 民族
-    birthday = models.DateField(default=None, blank=True, null=True)  # 生日
-    marriage = models.BooleanField(default=False)  # 婚姻状态
-    gender = models.CharField(max_length=30, default="")  # 性别
-    education = models.CharField(max_length=30, default="")  # 学历
-    school = models.CharField(max_length=128, default="")  # 学校
     curriculum_vitae = models.FileField(upload_to='material_curriculum/', blank=True)  # 电子简历
     certificate = models.FileField(upload_to='certificate/', blank=True)  # 证书
 
@@ -52,16 +51,16 @@ class Material(models.Model):
             "material_status": self.status,
             "material_user_id": self.user.id,
             "material_user_name": self.user.user_name,
-            "material_user_real_name": self.name,
-            "material_user_gender": self.gender,
-            "material_user_native_place": self.native_place,
-            "material_user_nationality": self.nationality,
-            "material_user_birthday": self.birthday,
-            "material_user_marriage": self.marriage,
-            "material_user_email": self.email,
-            "material_user_phone": self.phone,
-            "material_user_education": self.education,
-            "material_user_school": self.school,
+            # "material_user_real_name": self.name,
+            # "material_user_gender": self.gender,
+            # "material_user_native_place": self.native_place,
+            # "material_user_nationality": self.nationality,
+            # "material_user_birthday": self.birthday,
+            # "material_user_marriage": self.marriage,
+            # "material_user_email": self.email,
+            # "material_user_phone": self.phone,
+            # "material_user_education": self.education,
+            # "material_user_school": self.school,
         }
         return json.dumps(info)
 

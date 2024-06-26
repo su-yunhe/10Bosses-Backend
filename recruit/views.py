@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 import base64
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+
 from enterprise.models import Enterprise
 from io import BytesIO
 from PIL import Image
@@ -94,7 +95,7 @@ def show_recruitment(request):
 
 
 @csrf_exempt
-def update_recruitmrnt(request):
+def update_recruitment(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
@@ -155,6 +156,43 @@ def update_recruitmrnt(request):
         return JsonResponse({'error': 0, 'msg': '修改成功'})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def user_apply_recruit(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        recruit_id = request.POST.get('recruit_id')
+        curriculum_vitae = request.FILE.get('curriculum_vitae', None)
+        certificate = request.FILE.get('certificate', None)
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        if not Recruit.objects.filter(id=recruit_id).exists():
+            return JsonResponse({'error': 8003, 'msg': "操作招募不存在"})
+        user = Applicant.objects.get(id=user_id)
+        recruit = Recruit.objects.get(id=recruit_id)
+        enterprise = Enterprise.objects.get(id=recruit.enterprise.id)
+        # 验证用户管理员身份
+        if user.manage_enterprise_id != 0:
+            return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
+        # 返回列表
+        material = Material.objects.create(recruit=recruit, user=user)
+        if curriculum_vitae:
+            material.curriculum_vitae = curriculum_vitae
+        else:
+            material.curriculum_vitae = user.note
+        if certificate:
+            material.certificate = certificate
+        # else:
+        #     material.certificate = user.information.certificate
+        recruit.user_material.add(material)
+        enterprise.recruit_material.add(material)
+        material.save()
+        return JsonResponse({'error': 0, 'mag': material.id})
+
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
