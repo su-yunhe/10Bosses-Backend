@@ -86,32 +86,34 @@ def get_intended_recruitment(request):
         return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": recruitment_list})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
 
+
 @csrf_exempt
 def create_enterprise(request):
     if request.method == "POST":
         # 获取请求内容
-        user_id = request.POST.get('user_id') # 使用request.POST，因为如果需要传图片的话要使用form-data，不能使用原来的request.data或request.body
+        user_id = request.POST.get('user_id')  # 使用request.POST，因为如果需要传图片的话要使用form-data，不能使用原来的request.data或request.body
         name = request.POST.get('name')
         profile = request.POST.get('profile')
         picture = request.FILES.get('picture', None)
         address = request.POST.get('address')
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         if user.manage_enterprise_id != 0 or user.enterprise_id != 0:
-            return JsonResponse({'errno': 7004, 'msg': "该用户非管理员"})
+            return JsonResponse({'error': 7003, 'msg': "操作用户已在公司内"})
         # 创建实体
         enterprise = Enterprise.objects.create(name=name, profile=profile, address=address, manager=user)
+        enterprise.member.add(user)
         if picture:
             enterprise.picture = picture
             enterprise.save()
         user.manage_enterprise_id = enterprise.id
         user.enterprise_id = enterprise.id
         user.save()
-        return JsonResponse({'errno': 0, 'msg': '创建成功'})
+        return JsonResponse({'error': 0, 'msg': enterprise.id})
 
-    return JsonResponse({"errno": 7001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 7001, 'msg': "请求方式错误"})
 
 
 @csrf_exempt
@@ -121,16 +123,16 @@ def show_enterprise(request):
         enterprise_id = request.GET.get('enterprise_id')
         # 获取实体
         if not Enterprise.objects.filter(id=enterprise_id).exists():
-            return JsonResponse({'errno': 7003, 'msg': "该公司不存在"})
+            return JsonResponse({'error': 7004, 'msg': "该公司不存在"})
         enterprise = Enterprise.objects.get(id=enterprise_id)
         # 返回信息
         data = {"name": enterprise.name, "profile": enterprise.profile,
                 "picture": enterprise.picture.url,
                 "address": enterprise.address, "manager_id": enterprise.manager.id,
                 "manager_name": enterprise.manager.user_name, "manager_email": enterprise.manager.email}
-        return JsonResponse({'errno': 0, 'data': data})
+        return JsonResponse({'error': 0, 'data': data})
 
-    return JsonResponse({"errno": 7001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -138,32 +140,46 @@ def update_enterprise(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
-        user_be_manager_id = request.POST.get('user_be_manager_id')
-        name = request.POST.get('name')
-        profile = request.POST.get('profile')
-        picture = request.FILES['picture']
-        address = request.POST.get('address')
+        user_be_manager_id = request.POST.get('user_be_manager_id', None)
+        name = request.POST.get('name', None)
+        profile = request.POST.get('profile', None)
+        picture = request.FILES.get('picture', None)
+        address = request.POST.get('address', None)
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
-        if not Applicant.objects.filter(id=user_be_manager_id).exists():
-            return JsonResponse({'errno': 7005, 'msg': "目标用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
-        user_be_manager = Applicant.objects.get(id=user_be_manager_id)
         # 如果用户不是管理员判断
         if user.manage_enterprise_id == 0:
-            return JsonResponse({'errno': 7004, 'msg': "该用户非管理员"})
+            return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
         enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
         # 修改实体
-        enterprise.name = name
-        enterprise.profile = profile
-        enterprise.picture = picture
-        enterprise.address = address
-        enterprise.manager = user_be_manager
+        if name:
+            enterprise.name = name
+        if profile:
+            enterprise.profile = profile
+        if picture:
+            if os.path.isfile(enterprise.picture.path):  # 如果图像路径不是默认图像路径，则删除图像文件
+                if enterprise.picture.path != os.path.join(settings.MEDIA_ROOT, 'enterprise\default.jpg'):
+                    os.remove(enterprise.picture.path)
+            enterprise.picture = picture
+        if address:
+            enterprise.address = address
+        if user_be_manager_id:
+            if not Applicant.objects.filter(id=user_be_manager_id).exists():
+                return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
+            user_be_manager = Applicant.objects.get(id=user_be_manager_id)
+            if user_be_manager.enterprise_id != user.manage_enterprise_id:
+                return JsonResponse({'error': 7007, 'msg': "目标用户不在公司"})
+            user_be_manager.manage_enterprise_id = enterprise.id
+            user_be_manager.save()
+            user.manage_enterprise_id = 0
+            user.save()
+            enterprise.manager = user_be_manager
         enterprise.save()
-        return JsonResponse({'errno': 0, 'msg': '修改成功'})
+        return JsonResponse({'error': 0, 'msg': '修改成功'})
 
-    return JsonResponse({'errno': 7001, "msg": "请求方式错误"})
+    return JsonResponse({'error': 7001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -173,11 +189,11 @@ def delete_enterprise(request):
         user_id = request.POST.get('user_id')
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         # 如果用户不是管理员判断
         if user.manage_enterprise_id == 0:
-            return JsonResponse({'errno': 7004, 'msg': "该用户非管理员"})
+            return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
         enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
         if os.path.isfile(enterprise.picture.path):  # 如果图像路径不是默认图像路径，则删除图像文件
             if enterprise.picture.path != os.path.join(settings.MEDIA_ROOT, 'enterprise\default.jpg'):
@@ -191,9 +207,9 @@ def delete_enterprise(request):
         user.enterprise_id = 0
         enterprise.delete()
         user.save()
-        return JsonResponse({'errno': 0, 'msg': '删除成功'})
+        return JsonResponse({'error': 0, 'msg': '删除成功'})
 
-    return JsonResponse({"errno": 7001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -201,20 +217,44 @@ def show_enterprise_member(request):
     if request.method == "GET":
         # 获取请求内容
         user_id = request.GET.get('user_id')
-        enterprise_id = request.GET.get('enterprise_id')
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7003, 'msg': "该用户不存在"})
-        if not Enterprise.objects.filter(id=enterprise_id).exists():
-            return JsonResponse({'errno': 7003, 'msg': "该公司不存在"})
-        members = Enterprise.objects.get(id=enterprise_id).member.all()
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if user.enterprise_id == 0:
+            return JsonResponse({'error': 7008, 'msg': "操作用户不在公司内"})
+        enterprise = Enterprise.objects.get(id=user.enterprise_id)
+        members = enterprise.member.all()
         # 返回信息
         data = []
+        data.append(to_json_member(enterprise.manager))
         for member in members:
-            data.append(to_json_member(member))
-        return JsonResponse({'errno': 0, 'data': data})
+            if member.manage_enterprise_id == 0:
+                data.append(to_json_member(member))
+        return JsonResponse({'error': 0, 'data': data})
 
-    return JsonResponse({"errno": 7001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def show_recruitment_list(request):
+    if request.method == "GET":
+        # 获取请求内容
+        enterprise_id = request.GET.get('enterprise_id')
+        type = request.GET.get('type')
+        # 获取实体
+        if not Enterprise.objects.filter(id=enterprise_id).exists():
+            return JsonResponse({'error': 7004, 'msg': "该公司不存在"})
+        enterprise = Enterprise.objects.get(id=enterprise_id)
+        recruits = enterprise.recruitment.all()
+        # 返回信息
+        data = []
+        for recruit in recruits:
+            if str(recruit.status) == type:
+                data.append(to_json_recruit(recruit))
+        return JsonResponse({'error': 0, 'data': data})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
 # @csrf_exempt
@@ -226,65 +266,45 @@ def show_enterprise_member(request):
 #         choice = request.data.get('choice')
 #         # 获取实体
 #         if not Applicant.objects.filter(id=user_id).exists():
-#             return JsonResponse({'errno': 7003, 'msg': "用户不存在"})
+#             return JsonResponse({'error': 7003, 'msg': "用户不存在"})
 #         if not Material.objects.filter(id=material_id).exists():
-#             return JsonResponse({'errno': 7004, 'msg': "材料不存在"})
+#             return JsonResponse({'error': 7004, 'msg': "材料不存在"})
 #         user = Applicant.objects.get(id=user_id)
 #         material = Material.objects.get(id=material_id)
 #         if user.manage_enterprise_id != material.enterprise.id:
-#             return JsonResponse({'errno': 7004, 'msg': "用户无权限"})
+#             return JsonResponse({'error': 7004, 'msg': "用户无权限"})
 #         if material.status !=3:
-#             return JsonResponse({'errno': 7004, 'msg': "材料已处理"})
+#             return JsonResponse({'error': 7004, 'msg': "材料已处理"})
 #         # 返回信息
 #         data = {"name": enterprise.name, "profile": enterprise.profile,
 #                 "picture": enterprise_picture_base64(enterprise.picture),
 #                 "address": enterprise.address}
-#         return JsonResponse({'errno': 0, 'data': data})
+#         return JsonResponse({'error': 0, 'data': data})
 #
-#     return JsonResponse({"errno": 7001, "msg": "请求方式错误"})
-
-
-
-
-
-def enterprise_picture_base64(request, picture):
-    image = Image.open(picture)
-    buffered = BytesIO()
-    image.save(buffered, format="JPEG")
-    image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    return image_base64
+#     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
 def to_json_member(member):
     info = {
         "user_id": member.id,
-        "user_name": member.name,
+        "user_name": member.user_name,
         "user_email": member.email,
         "user_interests": member.interests,
         "background": member.background,
     }
-    return json.dumps(info)
+    return info
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def get_enterprise_picture_url(request, enterprise_id):
-#     enterprise = get_object_or_404(Enterprise, id=enterprise_id)
-#     picture_url = enterprise.picture.url if enterprise.picture else None
-#     return JsonResponse({'picture_url': picture_url})
+def to_json_recruit(recruit):
+    info = {
+        "recruit_id": recruit.id,
+        "recruit_post": recruit.post,
+        "recruit_profile": recruit.profile,
+        "recruit_number": recruit.number,
+        "recruit_release_time": recruit.release_time,
+        "recruit_education": recruit.education,
+        "salary_low": recruit.salary_low,
+        "salary_high": recruit.salary_high,
+        "address": recruit.enterprise.address}
+    return info
 

@@ -12,6 +12,9 @@ class Recruit(models.Model):
     post = models.CharField(max_length=128, default="")  # 岗位
     profile = models.TextField(default="")  # 工作简介
     number = models.IntegerField(default=0)  # 招募数量
+    salary_low = models.IntegerField(default=0)  # 最高薪资
+    salary_high = models.IntegerField(default=0)  # 最低薪资
+    status = models.BooleanField(default=True)  # 招聘状态
     # user_application = models.ManyToManyField(User, related_name='application_recruit_user')
     user_material = models.ManyToManyField('Material', related_name='application_material') # 申请材料列表
     # employment = models.ManyToManyField(User, related_name='employment_recruit_user')
