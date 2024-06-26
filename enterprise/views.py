@@ -1,3 +1,4 @@
+import os
 import jieba
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -6,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Enterprise
 from recruit.models import Recruit
 from haystack.query import SearchQuerySet
+from ScholarSHIP import settings
 
 import base64
 from django.shortcuts import get_object_or_404
@@ -13,7 +15,7 @@ from io import BytesIO
 from PIL import Image
 import json
 from Users.models import Applicant, Position
-
+from recruit.models import Material, Recruit
 
 @csrf_exempt
 def enterprise_search(request):
@@ -129,7 +131,7 @@ def recommend_enterprise(request):
 
 
 @csrf_exempt
-def creat_enterprise(request):
+def create_enterprise(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')  # 使用request.POST，因为如果需要传图片的话要使用form-data，不能使用原来的request.data或request.body
@@ -157,12 +159,11 @@ def creat_enterprise(request):
     return JsonResponse({"error": 7001, 'msg': "请求方式错误"})
 
 
-
 @csrf_exempt
 def show_enterprise(request):
-    if request.method == "POST":
+    if request.method == "GET":
         # 获取请求内容
-        enterprise_id = request.data.get("enterprise_id")
+        enterprise_id = request.GET.get('enterprise_id')
         # 获取实体
         if not Enterprise.objects.filter(id=enterprise_id).exists():
             return JsonResponse({'error': 7004, 'msg': "该公司不存在"})
@@ -228,7 +229,7 @@ def update_enterprise(request):
 def delete_enterprise(request):
     if request.method == "POST":
         # 获取请求内容
-        user_id = request.data.get("user_id")
+        user_id = request.POST.get('user_id')
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
             return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
@@ -237,6 +238,9 @@ def delete_enterprise(request):
         if user.manage_enterprise_id == 0:
             return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
         enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
+        if os.path.isfile(enterprise.picture.path):  # 如果图像路径不是默认图像路径，则删除图像文件
+            if enterprise.picture.path != os.path.join(settings.MEDIA_ROOT, 'enterprise\default.jpg'):
+                os.remove(enterprise.picture.path)
         # 执行删除
         users = enterprise.member.all()
         for u in users:
@@ -296,12 +300,13 @@ def show_recruitment_list(request):
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
-#
 # @csrf_exempt
-# def show_enterprise_member(request):
+# def manage_apply_user(request):
 #     if request.method == "POST":
 #         # 获取请求内容
-#         enterprise_id = request.data.get('enterprise_id')
+#         user_id = request.data.get('user_id')
+#         material_id = request.data.get('material_id')
+#         choice = request.data.get('choice')
 #         # 获取实体
 #         if not Applicant.objects.filter(id=user_id).exists():
 #             return JsonResponse({'error': 7003, 'msg': "用户不存在"})
@@ -338,11 +343,14 @@ def to_json_recruit(recruit):
         "recruit_id": recruit.id,
         "recruit_post": recruit.post,
         "recruit_profile": recruit.profile,
+        "recruit_status": recruit.status,
         "recruit_number": recruit.number,
         "recruit_release_time": recruit.release_time,
         "recruit_education": recruit.education,
         "salary_low": recruit.salary_low,
         "salary_high": recruit.salary_high,
-        "address": recruit.enterprise.address}
+        "address": recruit.address,
+        "experience": recruit.experience,
+        "requirement": recruit.requirement}
     return info
 
