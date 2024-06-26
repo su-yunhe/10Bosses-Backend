@@ -21,16 +21,23 @@ def search_enterprise(request):
     if request.method == 'POST':
         query = (request.POST.get('q', ''))  # 从POST请求中获取查询参数
         if query:
+            # jieba拆分搜索关键字
             search_list = jieba.cut_for_search(query)
             search_results = set()
             for search_name in search_list:
                 if not search_name.strip():  # 跳过空字符串
                     continue
+                print(search_name)
                 # 进行模糊搜索
+                # 调用whoosh引擎进行搜索
+                # sqs = SearchQuerySet().filter(content=search_name)
+                # for result in sqs:
+                #     search_results.add(result.object.id)
+
+                # 直接使用数据库模糊匹配
                 results = Enterprise.objects.filter(name__icontains=search_name)
                 for enterprise in results:
                     search_results.add(enterprise.id)
-            # print(search_results)
             results = list()
             for enterprise_id in search_results:
                 enterprise = Enterprise.objects.values().get(id=enterprise_id)
@@ -48,7 +55,6 @@ def search_enterprise(request):
                     recruitment["enterprise_name"] = enterprise_name
                 # print(recruitments)
                 results.append({"enterprise": enterprise, "recruitment": recruitments})
-
             return JsonResponse({'results': results}, status=200)
         else:
             # 用户没有提供关键词,只返回一些招聘
@@ -60,6 +66,18 @@ def search_enterprise(request):
             print(recruitments)
             return JsonResponse({'results': recruitments}, status=200)
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def whoosh_search(request):
+    query = request.POST.get('q', '')
+    sqs = SearchQuerySet().filter(content=query)
+    search_results = list()
+    for result in sqs:
+        search_results.append(result.object.id)
+    print(search_results)
+    results = [{'name': result.object.name} for result in sqs]
+    return JsonResponse(results, safe=False)
 
 
 @csrf_exempt
