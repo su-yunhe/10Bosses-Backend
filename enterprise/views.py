@@ -42,6 +42,10 @@ def search_enterprise(request):
                 del enterprise["manager_id"]
                 # 获取企业招聘列表
                 recruitments = list(Recruit.objects.values().filter(enterprise_id=enterprise_id))
+                for recruitment in recruitments:
+                    rec_enter_id = recruitment["enterprise_id"]
+                    enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+                    recruitment["enterprise_name"] = enterprise_name
                 # print(recruitments)
                 results.append({"enterprise": enterprise, "recruitment": recruitments})
 
@@ -49,6 +53,10 @@ def search_enterprise(request):
         else:
             # 用户没有提供关键词,只返回一些招聘
             recruitments = list(Recruit.objects.values().all())
+            for recruitment in recruitments:
+                rec_enter_id = recruitment["enterprise_id"]
+                enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+                recruitment["enterprise_name"] = enterprise_name
             print(recruitments)
             return JsonResponse({'results': recruitments}, status=200)
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
@@ -61,8 +69,13 @@ def get_enterprise_recruitment(request):
         enterprise_id = request.POST.get('enterprise_id')
         print(enterprise_id)
         recruitment_list = list(Recruit.objects.values().filter(enterprise_id=enterprise_id))
+        for recruitment in recruitment_list:
+            rec_enter_id = recruitment["enterprise_id"]
+            enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+            recruitment["enterprise_name"] = enterprise_name
         return JsonResponse({"errno": 0, "msg": "获取企业招聘信息成功", "data": recruitment_list})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+
 
 @csrf_exempt
 def get_intended_recruitment(request):
@@ -76,6 +89,7 @@ def get_intended_recruitment(request):
         recruitment_list = list(Recruit.objects.values().filter(post=user_intended_position))
         return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": recruitment_list})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+
 
 @csrf_exempt
 def creat_enterprise(request):
