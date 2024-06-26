@@ -7,7 +7,7 @@ from enterprise.models import Enterprise
 from io import BytesIO
 from PIL import Image
 import json
-from Users.models import Applicant
+from Users.models import Applicant, Position
 from recruit.models import Recruit, Material
 
 
@@ -189,11 +189,12 @@ def get_intended_recruitment(request):
         if not Applicant.objects.filter(id=user_id).exists():
             return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
         # 用户存在 获取意向岗位
-        user_intended_position = Applicant.objects.get(id=user_id).interests
-        recruitment_list = list(Recruit.objects.values().filter(post=user_intended_position))
-        for recruitment in recruitment_list:
-            rec_enter_id = recruitment["enterprise_id"]
-            enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
-            recruitment["enterprise_name"] = enterprise_name
-        return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": recruitment_list})
+        position_list = list(Position.objects.filter(user_id=user_id))
+        for position in position_list:
+            recruitment_list = list(Recruit.objects.values().filter(post=position.recruit_name))
+            for recruitment in recruitment_list:
+                rec_enter_id = recruitment["enterprise_id"]
+                enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+                recruitment["enterprise_name"] = enterprise_name
+            return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": recruitment_list})
     return JsonResponse({"errno": 2001, "msg": "请求方式错误"})

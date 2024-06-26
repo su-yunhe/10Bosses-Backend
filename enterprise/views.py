@@ -5,8 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Enterprise
 from recruit.models import Recruit
-from haystack.forms import ModelSearchForm
-from haystack.query import EmptySearchQuerySet, SearchQuerySet
+from haystack.query import SearchQuerySet
 
 import base64
 from django.shortcuts import get_object_or_404
