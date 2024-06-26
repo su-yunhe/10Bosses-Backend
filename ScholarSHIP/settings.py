@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "Users",
     "enterprise",
     "recruit",
+    "Trend",
 ]
 
 MIDDLEWARE = [

@@ -34,5 +34,6 @@ urlpatterns = [
     path("api/", include("SearchManager.urls")),
     path("api/", include("enterprise.urls")),
     path("api/", include("recruit.urls")),
+    path("api/", include("Trend.urls")),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
