@@ -264,6 +264,7 @@ def upload_pdf(request):
         user_temp = Applicant.objects.get(id=user_id)
         if pdf:
             user_temp.note = pdf
+            user_temp.is_upload = True
             user_temp.save()
 
         return JsonResponse(

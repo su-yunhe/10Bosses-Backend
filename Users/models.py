@@ -13,6 +13,7 @@ class Applicant(models.Model):
     )
     enterprise_id = models.IntegerField(default=0)
     manage_enterprise_id = models.IntegerField(default=0)
+    is_upload = models.BooleanField(default=False)
 
     class Meta:
         db_table = "applicant_info"
