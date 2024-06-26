@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "_(6a7b%au6%30g$fc9vf93ssme+p$@_*qd8t2y9u5d@p^09-zr"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # 修改项。允许所有的IP访问网络服务
 ALLOWED_HOSTS = ["*"]
@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     "Users",
     "enterprise",
     "recruit",
-    "rest_framework",
 ]
 
 MIDDLEWARE = [
