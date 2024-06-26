@@ -1,4 +1,3 @@
-
 from django import forms
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -12,7 +11,6 @@ from recruit.models import *
 
 from utils.token import create_token
 from .models import *
-
 
 
 class RegisterForm(forms.Form):
@@ -174,11 +172,10 @@ def interest_add(request):
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
-
 # 用户修改个人信息
 @csrf_exempt
 def user_modify_info(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         userid = request.POST.get("userId")
         user = Applicant.objects.get(id=userid)
         new_name = request.POST.get("name")
@@ -202,7 +199,7 @@ def user_modify_info(request):
 # 用户注销
 @csrf_exempt
 def user_delete(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         userid = request.POST.get("userId")
         # 先在applicant表中直接删除
         user = Applicant.objects.get(id=userid)
@@ -224,10 +221,14 @@ def user_delete(request):
 # 游客查询用户(精准查询，可改成模糊查询）
 @csrf_exempt
 def search_user(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         name = request.POST.get("name")
         if Applicant.objects.get(user_name=name):
-            results = list(Applicant.objects.filter(user_name=name).values('user_name', 'email', 'background'))
+            results = list(
+                Applicant.objects.filter(user_name=name).values(
+                    "user_name", "email", "background"
+                )
+            )
             return JsonResponse({"error": 0, "msg": "查询成功", "results": results})
         else:
             return JsonResponse({"error": 1001, "msg": "该用户不存在"})
@@ -235,20 +236,21 @@ def search_user(request):
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
+
 @csrf_exempt  # 可以用于简化 CSRF 保护
 def upload_pdf(request):
-    if request.method == "POST" and request.FILES["note"]:
-        pdf_file = request.FILES["note"]
-
-        # 处理上传的文件，比如保存到磁盘或者存储到数据库
-        # 这里仅示例保存到媒体文件夹中
-        with open("media/" + pdf_file.name, "wb+") as destination:
-            for chunk in pdf_file.chunks():
-                destination.write(chunk)
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        # name = request.POST.get('user_name')
+        pdf = request.FILES.get("note", None)
+        print(pdf)
+        user_temp = Applicant.objects.get(id=user_id)
+        if pdf:
+            user_temp.note = pdf
+            user_temp.save()
 
         return JsonResponse(
             {"status": "success", "message": "File uploaded successfully"}
         )
     else:
         return JsonResponse({"status": "fail", "message": "File upload failed"})
-
