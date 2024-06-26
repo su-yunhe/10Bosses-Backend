@@ -159,13 +159,11 @@ def get_single_applicant(request):
 def interest_add(request):
     if request.method == "POST":
         userid = request.POST.get("userId")
-        recruitid = request.POST.get("recruitId")
+        name = request.POST.get("post_name")
         new_position = Position()
         new_position.user_id = userid
-        new_position.recruit_id = recruitid
-        temp = Recruit()
-        temp = Recruit.objects.get(id=recruitid)
-        new_position.recruit_name = temp.post
+        new_position.recruit_id = 1
+        new_position.recruit_name = name
         new_position.save()
         return JsonResponse({"error": 0, "msg": "添加意向岗位成功"})
     else:
