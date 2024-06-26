@@ -166,9 +166,9 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "frontend/dist/"),
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "frontend/dist/"),
+# ]
 
 # 新增项。静态文件收集目录
 # STATIC_ROOT = os.path.join(BASE_DIR, "collected_static")
