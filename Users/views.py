@@ -218,20 +218,37 @@ def user_delete(request):
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
-# 游客查询用户(精准查询，可改成模糊查询）
+# 游客查询用户(精准查询）
 @csrf_exempt
 def search_user(request):
     if request.method == "POST":
         name = request.POST.get("name")
-        if Applicant.objects.get(user_name=name):
-            results = list(
-                Applicant.objects.filter(user_name=name).values(
-                    "user_name", "email", "background"
-                )
-            )
-            return JsonResponse({"error": 0, "msg": "查询成功", "results": results})
-        else:
-            return JsonResponse({"error": 1001, "msg": "该用户不存在"})
+        applicants = Applicant.objects.filter(user_name__icontains=name)
+        results = []
+        for applicant in applicants:
+            if applicant.manage_enterprise_id != 0:
+                manage_enterprise_name = Enterprise.objects.get(
+                    id=applicant.manage_enterprise_id
+                ).name
+            else:
+                manage_enterprise_name = None
+            if applicant.enterprise_id != 0:
+                enterprise_name = Enterprise.objects.get(
+                    id=applicant.enterprise_id
+                ).name
+            else:
+                enterprise_name = None
+            # 构建结果字典
+            result = {
+                "user_name": applicant.user_name,
+                "email": applicant.email,
+                "background": applicant.background,
+                "manage_enterprise_name": manage_enterprise_name,
+                "enterprise_name": enterprise_name,
+            }
+            results.append(result)
+
+        return JsonResponse({"error": 0, "msg": "查询成功", "results": results})
 
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
@@ -247,6 +264,7 @@ def upload_pdf(request):
         user_temp = Applicant.objects.get(id=user_id)
         if pdf:
             user_temp.note = pdf
+            user_temp.is_upload = True
             user_temp.save()
 
         return JsonResponse(
