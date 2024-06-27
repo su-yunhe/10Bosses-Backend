@@ -159,7 +159,7 @@ def update_recruitment(request):
 
 
 @csrf_exempt
-def user_apply_recruit(request):
+def user_apply_recruit(request):        # mark
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
@@ -196,15 +196,15 @@ def user_apply_recruit(request):
 
 
 @csrf_exempt
-def show_material(request):
-    if request.method == "POST":
+def show_recruit_material(request):
+    if request.method == "GET":
         # 获取请求内容
-        user_id = request.POST.get('user_id')
-        recruit_id = request.POST.get('recruit_id')
-        type = request.POST.get('type')   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
+        user_id = request.GET.get('user_id')
+        recruit_id = request.GET.get('recruit_id')
+        type = int(request.GET.get('type'))   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
-             return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
         if not Recruit.objects.filter(id=recruit_id).exists():
             return JsonResponse({'error': 8003, 'msg': "该招募不存在"})
         user = Applicant.objects.get(id=user_id)
@@ -215,16 +215,100 @@ def show_material(request):
         # 返回列表
         materials = recruit.user_material.all()
         ma_info = []
-        if type == '5':
+        if type == 4:
             for ma in materials:
-                ma_info.append(ma.to_json())
+                if int(ma.status) != 5:
+                    ma_info.append(to_json_material(ma))
         else:
             for ma in materials:
-                if ma.status == type:
+                if int(ma.status) == type:
                     ma_info.append(ma.to_json())
         return JsonResponse({'error': 0, 'data': ma_info})
 
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+def to_json_material(material):
+    return json.dumps({
+        "material_id": material.id,
+        "material_status": material.status,
+        "material_user_id": material.user.id,
+        "material_user_name": material.user.user_name,
+        "material_recruit_id": material.recruit.id,
+        "material_recruit_post": material.recruit.post,
+        # "material_user_real_name": material.user.information.name,
+        # "material_user_gender": material.user.information.gender,
+        # "material_user_phone": material.user.information.phone,
+        # "material_user_education": material.user.information.education,
+        # "material_user_school": material.user.information.school,
+    })
+
+
+@csrf_exempt
+def show_enterprise_material(request):
+    if request.method == "GET":
+        # 获取请求内容
+        user_id = request.GET.get('user_id')
+        enterprise_id = request.GET.get('enterprise_id')
+        type = int(request.GET.get('type'))   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
+        if not Enterprise.objects.filter(id=enterprise_id).exists():
+            return JsonResponse({'error': 8003, 'msg': "该企业不存在"})
+        user = Applicant.objects.get(id=user_id)
+        enterprise = Enterprise.objects.get(id=enterprise_id)
+        # 验证用户管理员身份
+        if user.manage_enterprise_id != enterprise_id:
+            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
+        # 返回列表
+        materials = enterprise.recruit_material.all()
+        ma_info = []
+        if type == 4:
+            for ma in materials:
+                if int(ma.status) != 5:
+                    ma_info.append(to_json_material(ma))
+        else:
+            for ma in materials:
+                if int(ma.status) == type:
+                    ma_info.append(to_json_material(ma))
+        return JsonResponse({'error': 0, 'data': ma_info})
+
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def manage_apply_material(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        material_id = request.POST.get('material_id')
+        type = int(request.POST.get('type'))   # 2 已通过 0 未通过
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
+        if not Material.objects.filter(id=material_id).exists():
+            return JsonResponse({'error': 8003, 'msg': "该招聘不存在"})
+        user = Applicant.objects.get(id=user_id)
+        material = Enterprise.objects.get(id=material_id)
+        # 验证用户管理员身份
+        if user.manage_enterprise_id != material.recruit.enterprise.id:
+            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
+        if material.status != 3:
+            return JsonResponse({'error': 7004, 'msg': "已被审核"})
+        material.status = type
+        material.save()
+        return JsonResponse({'error': 0, 'msg': "已审核"})
+
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+# 用户投递简历
+# 公司审批简历
+# 用户确认已通过简历，进入公司
+# 普通用户请求认证
+# 公司审批认证，用户进入公司
+# 注，若用户先前有公司则自动退出公司，系统通知管理员
 
 
 def show_material_single(request):
@@ -234,14 +318,14 @@ def show_material_single(request):
         material_id = request.POST.get('material_id')
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
-             return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
         if not Material.objects.filter(id=material_id).exists():
             return JsonResponse({'error': 8003, 'msg': "该材料不存在"})
         user = Applicant.objects.get(id=user_id)
         material = Material.objects.get(id=material_id)
         # 验证管理员身份
-        if user.manage_enterprise_id != material.recruit.enterprise.id:
-            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
+        if user != material.user and user != material.recruit.enterprise.manager:
+            return JsonResponse({'error': 7004, 'msg': "该用户无权限"})
         # 返回信息
         return JsonResponse({'error': 0, 'data': material.to_json()})
 

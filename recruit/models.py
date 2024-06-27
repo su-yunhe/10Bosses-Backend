@@ -27,7 +27,7 @@ class Recruit(models.Model):
 
 class Material(models.Model):
     id = models.AutoField(primary_key=True)  # id 主键
-    status = models.CharField(max_length=20, default='3', null=False)      # 3 待审核 2 已通过 1 已录用 0 未通过
+    status = models.CharField(max_length=20, default='3', null=False)      # 3 待审核 2 已通过 1 已录用 0 未通过 5 作废 6 已拒绝
     recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=True)
     # enterprise = models.ForeignKey('Enterprise', on_delete=CASCADE, null=True)
     # submit_time = models.DateField(auto_now_add=True)
@@ -45,12 +45,14 @@ class Material(models.Model):
     curriculum_vitae = models.FileField(upload_to='material_curriculum/', blank=True)  # 电子简历
     certificate = models.FileField(upload_to='certificate/', blank=True)  # 证书
 
-    def to_json(self):     # 少简历和证书
+    def to_json(self):
         info = {
             "material_id": self.id,
             "material_status": self.status,
             "material_user_id": self.user.id,
             "material_user_name": self.user.user_name,
+            "material_curriculum_vitae": self.curriculum_vitae.url,
+            "material_certificate": self.certificate.url,
             # "material_user_real_name": self.name,
             # "material_user_gender": self.gender,
             # "material_user_native_place": self.native_place,
