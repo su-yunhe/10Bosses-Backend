@@ -11,4 +11,5 @@ urlpatterns = [
     path("interest_add", interest_add),
     path("upload/", upload_pdf),
     path("user_logout", user_delete),
+    path("update_user_interest", update_user_interest),
 ]

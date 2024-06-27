@@ -139,7 +139,7 @@ def get_single_applicant(request):
     if request.method == "POST":
         userid = request.POST.get("userId")
         results = list(Applicant.objects.filter(id=userid).values())
-        interests = list(Position.objects.filter(id=userid).values())
+        interests = list(Position.objects.filter(user_id=userid).values())
         if not results:  # 如果查询结果为空
             return JsonResponse({"error": 1001, "msg": "查无此人"})
 
@@ -240,6 +240,7 @@ def search_user(request):
                 enterprise_name = None
             # 构建结果字典
             result = {
+                "user_id": applicant.id,
                 "user_name": applicant.user_name,
                 "email": applicant.email,
                 "background": applicant.background,
@@ -272,3 +273,18 @@ def upload_pdf(request):
         )
     else:
         return JsonResponse({"status": "fail", "message": "File upload failed"})
+
+
+@csrf_exempt
+def update_user_interest(request):
+    if request.method == "POST":
+        user_id = request.POST.get("userId")
+        interests = request.POST.get("interests")
+        interests = json.loads(interests)
+        Position.objects.filter(user_id=user_id).delete()
+        for recruit_name in interests:
+            Position.objects.create(user_id=user_id, recruit_name=recruit_name)
+        return JsonResponse({"error": 0, "msg": "更新成功"})
+
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
