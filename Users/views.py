@@ -1,5 +1,4 @@
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import re
@@ -77,6 +76,9 @@ def register(request):
                 },
             }
         )
+
+        # else:
+        #     return JsonResponse({'error': 3001, 'msg': '表单信息验证失败'})
 
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
@@ -199,10 +201,10 @@ def user_modify_info(request):
 def user_delete(request):
     if request.method == "POST":
         userid = request.POST.get("userId")
-        # 先在applicant表中直接删除,同时中间表关联删除
+        # 先在applicant表中直接删除
         user = Applicant.objects.get(id=userid)
         user.delete()
-        # 如果管理了某个企业，则该企业自动解散，同时中间表关联删除
+        # 如果管理了某个企业，则该企业自动解散
         if user.manage_enterprise_id != 0:
             manage_enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
             manage_enterprise.delete()
@@ -230,11 +232,11 @@ def search_user(request):
                 enterprise_name = None
             # 构建结果字典
             result = {
-                'user_name': applicant.user_name,
-                'email': applicant.email,
-                'background': applicant.background,
-                'manage_enterprise_name': manage_enterprise_name,
-                'enterprise_name': enterprise_name,
+                "user_name": applicant.user_name,
+                "email": applicant.email,
+                "background": applicant.background,
+                "manage_enterprise_name": manage_enterprise_name,
+                "enterprise_name": enterprise_name,
             }
             results.append(result)
 
@@ -244,7 +246,7 @@ def search_user(request):
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
-@csrf_exempt
+@csrf_exempt  # 可以用于简化 CSRF 保护
 def upload_pdf(request):
     if request.method == "POST":
         user_id = request.POST.get("user_id")
@@ -254,12 +256,30 @@ def upload_pdf(request):
         user_temp = Applicant.objects.get(id=user_id)
         if pdf:
             user_temp.note = pdf
+            user_temp.is_upload = True
             user_temp.save()
 
         return JsonResponse(
-            {"error": 0, "msg": "上传简历成功"}
+            {"status": "success", "message": "File uploaded successfully"}
         )
     else:
+        return JsonResponse({"status": "fail", "message": "File upload failed"})
+
+
+@csrf_exempt
+def user_follow(request):
+    if request.method == "POST":
+        follower_id = request.POST.get("userId")
+        followee_id = request.POST.get("followeeId")
+
+        follower = Applicant.objects.get(id=follower_id)
+        followee = Applicant.objects.get(id=followee_id)
+
+        # if followee in follower.following.all():
+        #     return JsonResponse({"error": 1003, "msg": "已关注"})
+
+        follower.following.add(followee)
+        return JsonResponse({"error": 0, "msg": "关注成功"})
+
+    else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
-
-

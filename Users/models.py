@@ -13,6 +13,8 @@ class Applicant(models.Model):
     )
     enterprise_id = models.IntegerField(default=0)
     manage_enterprise_id = models.IntegerField(default=0)
+    is_upload = models.BooleanField(default=False)
+    followers = models.ManyToManyField('self', symmetrical=False, related_name='following')
 
     class Meta:
         db_table = "applicant_info"
