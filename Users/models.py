@@ -28,3 +28,17 @@ class Position(models.Model):
 
     class Meta:
         db_table = "applicant_interests"
+
+
+class Information(models.Model):
+    name = models.CharField(max_length=128, default="")
+    phone = models.CharField(max_length=30, default="")
+    native_place = models.CharField(max_length=128, default="")
+    nationality = models.CharField(max_length=128, default="")
+    birthday = models.DateField(null=True, blank=True, default=None)
+    marriage = models.BooleanField(default=False)
+    gender = models.CharField(max_length=30, default="")
+    education = models.CharField(max_length=30, default="")
+    school = models.CharField(max_length=128, default="")
+
+

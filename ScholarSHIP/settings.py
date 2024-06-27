@@ -41,17 +41,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
-    "test1",
-    "user",
-    "manager",
-    "academic",
-    "dataAnalysis",
-    "author",
-    "SearchManager",
     "Users",
     "enterprise",
     "recruit",
     "Trend",
+    "chat",
 ]
 
 MIDDLEWARE = [

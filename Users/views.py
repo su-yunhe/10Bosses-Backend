@@ -268,6 +268,7 @@ def upload_pdf(request):
         return JsonResponse({"status": "fail", "message": "File upload failed"})
 
 
+# 关注用户
 @csrf_exempt
 def user_follow(request):
     if request.method == "POST":
