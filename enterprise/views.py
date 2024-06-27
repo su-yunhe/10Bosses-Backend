@@ -204,7 +204,7 @@ def show_enterprise(request):
 
 
 @csrf_exempt
-def update_enterprise(request):
+def update_enterprise(request):     # mark
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
@@ -240,6 +240,10 @@ def update_enterprise(request):
             if user_be_manager.enterprise_id != user.manage_enterprise_id:
                 return JsonResponse({'error': 7007, 'msg': "目标用户不在公司"})
             user_be_manager.manage_enterprise_id = enterprise.id
+            # for ma in user.materials:
+            #     if ma.status == 3 or ma.status == 2:
+            #         ma.status = 5
+            #         ma.save()
             user_be_manager.save()
             user.manage_enterprise_id = 0
             user.save()
@@ -323,6 +327,7 @@ def show_recruitment_list(request):
         return JsonResponse({'error': 0, 'data': data})
 
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
 
 
 # @csrf_exempt
