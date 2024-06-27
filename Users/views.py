@@ -302,8 +302,7 @@ def download_pdf(request):
 def update_user_interest(request):
     if request.method == "POST":
         user_id = request.POST.get("userId")
-        interests = request.POST.get("interests")
-        interests = json.loads(interests)
+        interests = request.POST.getlist("interests[]")
         Position.objects.filter(user_id=user_id).delete()
         for recruit_name in interests:
             Position.objects.create(user_id=user_id, recruit_name=recruit_name)
