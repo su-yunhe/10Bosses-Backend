@@ -1,6 +1,5 @@
 from django.db import models
-from django.db.models import CASCADE
-
+from django.db.models import CASCADE, SET_NULL
 from Users.models import Applicant
 import json
 
@@ -29,19 +28,9 @@ class Material(models.Model):
     id = models.AutoField(primary_key=True)  # id 主键
     status = models.CharField(max_length=20, default='3', null=False)      # 3 待审核 2 已通过 1 已录用 0 未通过 5 作废 6 已拒绝
     recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=True)
-    # enterprise = models.ForeignKey('Enterprise', on_delete=CASCADE, null=True)
-    # submit_time = models.DateField(auto_now_add=True)
-    # name = models.CharField(max_length=128, default="")  # 真实姓名
-    # email = models.EmailField(default="")  # 邮箱
-    # phone = models.CharField(max_length=30, default="")  # 电话
-    # native_place = models.CharField(max_length=128, default="")  # 籍贯
-    # nationality = models.CharField(max_length=128, default="")  # 民族
-    # birthday = models.DateField(default=None, blank=True, null=True)  # 生日
-    # marriage = models.BooleanField(default=False)  # 婚姻状态
-    # gender = models.CharField(max_length=30, default="")  # 性别
-    # education = models.CharField(max_length=30, default="")  # 学历
-    # school = models.CharField(max_length=128, default="")  # 学校
-    user = models.ForeignKey('Users.Applicant', on_delete=CASCADE, null=False)
+    enterprise = models.ForeignKey('enterprise.Enterprise', on_delete=CASCADE, null=True)
+    submit_time = models.DateField(auto_now_add=True)  # 发布时间
+    information = models.ForeignKey('Users.Information', on_delete=SET_NULL, null=True)
     curriculum_vitae = models.FileField(upload_to='material_curriculum/', blank=True)  # 电子简历
     certificate = models.FileField(upload_to='certificate/', blank=True)  # 证书
 
