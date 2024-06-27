@@ -1,5 +1,6 @@
+import os
 from django import forms
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import re
 
@@ -273,6 +274,28 @@ def upload_pdf(request):
         )
     else:
         return JsonResponse({"status": "fail", "message": "File upload failed"})
+
+
+@csrf_exempt
+def download_pdf(request):
+    user_id = request.POST.get("userId")
+    user_temp = Applicant.objects.get(id=user_id)
+    if user_temp.note:
+        file_path = user_temp.note.path
+        print(file_path)
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as file:
+                response = HttpResponse(file.read(), content_type="application/pdf")
+                response["Content-Disposition"] = (
+                    f'attachment; filename="{os.path.basename(file_path)}"'
+                )
+                return response
+        else:
+            return JsonResponse({"status": "fail", "message": "File does not exist"})
+    else:
+        return JsonResponse(
+            {"status": "fail", "message": "No file uploaded for this user"}
+        )
 
 
 @csrf_exempt
