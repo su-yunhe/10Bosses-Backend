@@ -1,5 +1,6 @@
+import os
 from django import forms
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import re
 
@@ -139,7 +140,7 @@ def get_single_applicant(request):
     if request.method == "POST":
         userid = request.POST.get("userId")
         results = list(Applicant.objects.filter(id=userid).values())
-        interests = list(Position.objects.filter(id=userid).values())
+        interests = list(Position.objects.filter(user_id=userid).values())
         if not results:  # 如果查询结果为空
             return JsonResponse({"error": 1001, "msg": "查无此人"})
 
@@ -232,6 +233,7 @@ def search_user(request):
                 enterprise_name = None
             # 构建结果字典
             result = {
+                "user_id": applicant.id,
                 "user_name": applicant.user_name,
                 "email": applicant.email,
                 "background": applicant.background,
@@ -283,3 +285,40 @@ def user_follow(request):
 
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def download_pdf(request):
+    user_id = request.POST.get("userId")
+    user_temp = Applicant.objects.get(id=user_id)
+    if user_temp.note:
+        file_path = user_temp.note.path
+        print(file_path)
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as file:
+                response = HttpResponse(file.read(), content_type="application/pdf")
+                response["Content-Disposition"] = (
+                    f'attachment; filename="{os.path.basename(file_path)}"'
+                )
+                return response
+        else:
+            return JsonResponse({"status": "fail", "message": "File does not exist"})
+    else:
+        return JsonResponse(
+            {"status": "fail", "message": "No file uploaded for this user"}
+        )
+
+
+@csrf_exempt
+def update_user_interest(request):
+    if request.method == "POST":
+        user_id = request.POST.get("userId")
+        interests = request.POST.getlist("interests[]")
+        Position.objects.filter(user_id=user_id).delete()
+        for recruit_name in interests:
+            Position.objects.create(user_id=user_id, recruit_name=recruit_name)
+        return JsonResponse({"error": 0, "msg": "更新成功"})
+
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
