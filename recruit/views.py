@@ -159,13 +159,13 @@ def update_recruitment(request):
 
 
 @csrf_exempt
-def user_apply_recruit(request):        # mark
+def user_apply_recruit(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
         recruit_id = request.POST.get('recruit_id')
-        curriculum_vitae = request.FILE.get('curriculum_vitae', None)
-        certificate = request.FILE.get('certificate', None)
+        curriculum_vitae = request.FILES.get('curriculum_vitae', None)
+        certificate = request.FILES.get('certificate', None)
         # 获取实体
         if not Applicant.objects.filter(id=user_id).exists():
             return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
@@ -178,15 +178,13 @@ def user_apply_recruit(request):        # mark
         if user.manage_enterprise_id != 0:
             return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
         # 返回列表
-        material = Material.objects.create(recruit=recruit, user=user)
+        material = Material.objects.create(recruit=recruit, enterprise=enterprise, information=user.Information)
         if curriculum_vitae:
             material.curriculum_vitae = curriculum_vitae
         else:
             material.curriculum_vitae = user.note
         if certificate:
             material.certificate = certificate
-        # else:
-        #     material.certificate = user.information.certificate
         recruit.user_material.add(material)
         enterprise.recruit_material.add(material)
         material.save()
