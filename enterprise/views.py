@@ -70,6 +70,12 @@ def enterprise_search(request):
 
 
 @csrf_exempt
+def test(request):
+    users = list(Applicant.objects.values().all())
+    return JsonResponse({"users": users})
+
+
+@csrf_exempt
 def whoosh_search(request):
     query = request.POST.get('q', '')
     sqs = SearchQuerySet().filter(content=query)
