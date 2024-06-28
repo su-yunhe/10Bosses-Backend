@@ -56,7 +56,14 @@ def enterprise_search(request):
                     recruitment["enterprise_name"] = enterprise_name
                 # print(recruitments)
                 results.append({"enterprise": enterprise, "recruitment": recruitments})
-            return JsonResponse({'results': results}, status=200)
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "企业搜索成功",
+                    "data": {
+                        "results": results
+                    }
+                })
         else:
             # 用户没有提供关键词,只返回一些招聘
             recruitments = list(Recruit.objects.values().all())
@@ -65,18 +72,19 @@ def enterprise_search(request):
                 enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
                 recruitment["enterprise_name"] = enterprise_name
             print(recruitments)
-            return JsonResponse({'results': recruitments}, status=200)
-    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "关键词为空，返回所有招聘信息供用户浏览",
+                    "data": {
+                        "results": recruitments
+                    }
+                })
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
-def test(request):
-    users = list(Applicant.objects.values().all())
-    return JsonResponse({"users": users})
-
-
-@csrf_exempt
-def whoosh_search(request):
+def whoosh_search(request): # 测试，实际没有被调用过
     query = request.POST.get('q', '')
     sqs = SearchQuerySet().filter(content=query)
     search_results = list()
@@ -98,8 +106,15 @@ def get_enterprise_recruitment(request):
             rec_enter_id = recruitment["enterprise_id"]
             enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
             recruitment["enterprise_name"] = enterprise_name
-        return JsonResponse({"errno": 0, "msg": "获取企业招聘信息成功", "data": recruitment_list})
-    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取企业招聘信息成功",
+                "data": {
+                    "results": recruitment_list
+                }
+            })
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -108,12 +123,12 @@ def recommend_enterprise(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
         # 用户存在 获取意向岗位
         position_list = list(Position.objects.filter(user_id=user_id))
         if not position_list:
             # 该用户还没有填写意向岗位
-            return JsonResponse({'errno': 1001, 'msg': "用户还没有填写意向岗位"})
+            return JsonResponse({'error': 1001, 'msg': "用户还没有填写意向岗位"})
         enterprise_id_set = set()
         for position in position_list:
             recruitment_list = list(Recruit.objects.values().filter(post=position.recruit_name))
@@ -125,9 +140,21 @@ def recommend_enterprise(request):
             enterprise = Enterprise.objects.values().get(id=ent_id)
             results.append(enterprise)
         if results:
-            return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的企业成功", "data": results})
-        return JsonResponse({"errno": 0, "msg": "当前还没有企业招聘这些岗位的员工"})
-    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "获取用户意向岗位的企业成功",
+                    "data": {
+                        "results": results
+                    }
+                })
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "当前还没有企业招聘这些岗位的员工",
+                "data": {}
+            })
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -136,12 +163,17 @@ def recommend_users(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
         # 用户存在 获取意向岗位列表
         position_list = list(Position.objects.filter(user_id=user_id))
         if not position_list:
             # 该用户还没有填写意向岗位
-            return JsonResponse({'errno': 1001, 'msg': "用户还没有填写意向岗位"})
+            return JsonResponse(
+                {
+                    'error': 0,
+                    'msg': "用户还没有填写意向岗位",
+                    "data": {}
+                })
         user_id_set = set()
         for position in position_list:
             # 获取该岗位的所有关注条目
@@ -156,9 +188,21 @@ def recommend_users(request):
             user = Applicant.objects.values().get(id=other_user_id)
             results.append(user)
         if results:
-            return JsonResponse({"errno": 0, "msg": "获取相同意向岗位的用户成功", "data": results})
-        return JsonResponse({"errno": 0, "msg": "当前还没有关注这些岗位的用户"})
-    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "获取相同意向岗位的用户成功",
+                    "data": {
+                        "results": results
+                    }
+                })
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "当前还没有关注这些岗位的用户",
+                "data": {}
+            })
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
