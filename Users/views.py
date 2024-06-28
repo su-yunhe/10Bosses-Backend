@@ -326,3 +326,5 @@ def update_user_interest(request):
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
+
+
