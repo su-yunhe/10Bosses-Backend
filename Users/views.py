@@ -62,8 +62,11 @@ def register(request):
         new_user.user_name = username
         new_user.password = password1
         new_user.email = email
+        information = Information.objects.create()
+        new_user.only_information = information
         new_user.save()
-
+        information.only_user = new_user
+        information.save()
         token = create_token(username)
         return JsonResponse(
             {
