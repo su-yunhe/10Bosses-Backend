@@ -262,10 +262,32 @@ def user_follow(request):
 @csrf_exempt
 def get_all_followee(request):
     if request.method == "POST":
-        userid = request.POST.get("userId")
-        user = Applicant.objects.get(id=userid)
-        followee = list(user.followers.filter(to_applicant_id=userid).values("from_applicant_id"))
-        return JsonResponse({"error": 0, "msg": "获取成功", "followee": followee})
+        try:
+            userid = request.POST.get("userId")
+            user = Applicant.objects.get(id=userid)
+            followee = list(user.following.values("id", "user_name"))
+            cnt = user.following.count()
+            return JsonResponse({"error": 0, "msg": "获取成功", "data": {"followee": followee, "cnt": cnt}})
+        except Exception as e:
+            logger.error(f"Error sending message: {e}")
+            return JsonResponse({"error": 500, "msg": "服务器内部错误"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+# 获取所有粉丝
+@csrf_exempt
+def get_all_follower(request):
+    if request.method == "POST":
+        try:
+            userid = request.POST.get("userId")
+            user = Applicant.objects.get(id=userid)
+            follower = list(user.followers.values("id", "user_name"))
+            cnt = user.followers.count()
+            return JsonResponse({"error": 0, "msg": "获取成功", "data": {"follower": follower, "cnt": cnt}})
+        except Exception as e:
+            logger.error(f"Error sending message: {e}")
+            return JsonResponse({"error": 500, "msg": "服务器内部错误"})
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
