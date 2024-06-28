@@ -358,7 +358,14 @@ def recruitment_search(request):
                 enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
                 recruitment["enterprise_name"] = enterprise_name
                 recruitments.append(recruitment)
-            return JsonResponse({'results': recruitments}, status=200)
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "招聘信息搜索成功",
+                    "data": {
+                        'results': recruitments
+                    }
+                })
         else:
             # 用户没有提供关键词
             recruitments = list(Recruit.objects.values().all())
@@ -366,7 +373,14 @@ def recruitment_search(request):
                 rec_enter_id = recruitment["enterprise_id"]
                 enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
                 recruitment["enterprise_name"] = enterprise_name
-            return JsonResponse({'results': recruitments}, status=200)
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "关键词为空",
+                    "data": {
+                        'results': recruitments
+                    }
+                })
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
@@ -376,12 +390,12 @@ def get_intended_recruitment(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'errno': 7002, 'msg': "该用户不存在"})
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
         # 用户存在 获取意向岗位
         position_list = list(Position.objects.filter(user_id=user_id))
         if not position_list:
             # 该用户还没有填写意向岗位
-            return JsonResponse({'errno': 1001, 'msg': "用户还没有填写意向岗位"})
+            return JsonResponse({'error': 1001, 'msg': "用户还没有填写意向岗位"})
         results = list()
         for position in position_list:
             recruitment_list = list(Recruit.objects.values().filter(post=position.recruit_name))
@@ -391,8 +405,15 @@ def get_intended_recruitment(request):
                 recruitment["enterprise_name"] = enterprise_name
                 results.append(recruitment)
         if results:
-            return JsonResponse({"errno": 0, "msg": "获取用户意向岗位的招聘信息成功", "data": results})
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "获取用户意向岗位的招聘信息成功",
+                    "data": {
+                        "results": results
+                    }
+                })
         else:
             # 还没有企业在这些岗位招聘
-            return JsonResponse({"errno": 1002, "msg": "当前还没有这些岗位的招聘信息"})
-    return JsonResponse({"errno": 2001, "msg": "请求方式错误"})
+            return JsonResponse({"error": 1002, "msg": "当前还没有这些岗位的招聘信息"})
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
