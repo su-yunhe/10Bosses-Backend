@@ -25,7 +25,7 @@ def open_conversation(request):
 
             conversation_id = conversation.id
 
-            return JsonResponse({"error": 0, "msg": "打开对话成功", "conversation_id": conversation_id})
+            return JsonResponse({"error": 0, "msg": "打开对话成功", "data": {"conversation_id": conversation_id}})
 
         except Exception as e:
             logger.error(f"Error sending message: {e}")

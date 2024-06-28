@@ -118,8 +118,10 @@ def get_single_applicant(request):
             {
                 "error": 0,
                 "msg": "获取用户信息成功",
-                "results": results,
-                "interests": interests,
+                "data": {
+                    "results": results,
+                    "interests": interests,
+                }
             }
         )
     else:
@@ -212,7 +214,7 @@ def search_user(request):
             }
             results.append(result)
 
-        return JsonResponse({"error": 0, "msg": "查询成功", "results": results})
+        return JsonResponse({"error": 0, "msg": "查询成功", "data": results})
 
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
@@ -232,10 +234,10 @@ def upload_pdf(request):
             user_temp.save()
 
         return JsonResponse(
-            {"status": "success", "message": "File uploaded successfully"}
+            {"error": 0, "msg": "文件上传成功"}
         )
     else:
-        return JsonResponse({"status": "fail", "message": "File upload failed"})
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 # 关注用户
@@ -307,11 +309,9 @@ def download_pdf(request):
                 )
                 return response
         else:
-            return JsonResponse({"status": "fail", "message": "File does not exist"})
+            return JsonResponse({"error": 3001, "msg": "文件不存在"})
     else:
-        return JsonResponse(
-            {"status": "fail", "message": "No file uploaded for this user"}
-        )
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
