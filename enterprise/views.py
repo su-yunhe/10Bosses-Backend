@@ -30,7 +30,7 @@ def enterprise_search(request):
                     continue
                 print(search_name)
                 # 进行模糊搜索
-                # 调用whoosh引擎进行搜索
+                # 调用whoosh引擎进行搜索，暂时不使用
                 # sqs = SearchQuerySet().filter(content=search_name)
                 # for result in sqs:
                 #     search_results.add(result.object.id)
@@ -75,7 +75,7 @@ def enterprise_search(request):
             return JsonResponse(
                 {
                     "error": 0,
-                    "msg": "关键词为空，返回所有招聘信息供用户浏览",
+                    "msg": "关键词为空，返回所有企业",
                     "data": {
                         "results": recruitments
                     }
