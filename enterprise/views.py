@@ -215,6 +215,8 @@ def create_enterprise(request):
         picture = request.FILES.get('picture', None)
         address = request.POST.get('address')
         # 获取实体
+        if Enterprise.objects.filter(name=name).exists():
+            return JsonResponse({'error': 7009, 'msg': "公司名重复"})
         if not Applicant.objects.filter(id=user_id).exists():
             return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
@@ -229,7 +231,7 @@ def create_enterprise(request):
         user.manage_enterprise_id = enterprise.id
         user.enterprise_id = enterprise.id
         user.save()
-        return JsonResponse({'error': 0, 'msg': enterprise.id})
+        return JsonResponse({'error': 0, 'data': enterprise.id})
 
     return JsonResponse({"error": 7001, 'msg': "请求方式错误"})
 
@@ -273,6 +275,8 @@ def update_enterprise(request):     # mark
         enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
         # 修改实体
         if name:
+            if enterprise.name == name:
+                return JsonResponse({'error': 7009, 'msg': "公司名重复"})
             enterprise.name = name
         if profile:
             enterprise.profile = profile
@@ -379,32 +383,61 @@ def show_recruitment_list(request):
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
+@csrf_exempt
+def normal_user_apply_enterprise(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        enterprise_id = request.POST.get('enterprise_id')
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        if not Enterprise.objects.filter(id=enterprise_id).exists():
+            return JsonResponse({'error': 8003, 'msg': "操作企业不存在"})
+        user = Applicant.objects.get(id=user_id)
+        enterprise = Enterprise.objects.get(id=enterprise_id)
+        # 验证用户管理员身份
+        if user.manage_enterprise_id != 0:
+            return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
 
-# @csrf_exempt
-# def manage_apply_user(request):
-#     if request.method == "POST":
-#         # 获取请求内容
-#         user_id = request.data.get('user_id')
-#         material_id = request.data.get('material_id')
-#         choice = request.data.get('choice')
-#         # 获取实体
-#         if not Applicant.objects.filter(id=user_id).exists():
-#             return JsonResponse({'error': 7003, 'msg': "用户不存在"})
-#         if not Material.objects.filter(id=material_id).exists():
-#             return JsonResponse({'error': 7004, 'msg': "材料不存在"})
-#         user = Applicant.objects.get(id=user_id)
-#         material = Material.objects.get(id=material_id)
-#         if user.manage_enterprise_id != material.enterprise.id:
-#             return JsonResponse({'error': 7004, 'msg': "用户无权限"})
-#         if material.status !=3:
-#             return JsonResponse({'error': 7004, 'msg': "材料已处理"})
-#         # 返回信息
-#         data = {"name": enterprise.name, "profile": enterprise.profile,
-#                 "picture": enterprise_picture_base64(enterprise.picture),
-#                 "address": enterprise.address}
-#         return JsonResponse({'error': 0, 'data': data})
-#
-#     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+        material = Material.objects.create(enterprise=enterprise, information=user.Information)
+        enterprise.normal_user_material.add(material)
+        return JsonResponse({'error': 0, 'data': material.id})
+
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def show_enterprise_normal_material(request):
+    if request.method == "GET":
+        # 获取请求内容
+        user_id = request.GET.get('user_id')
+        enterprise_id = request.GET.get('enterprise_id')
+        type = int(request.GET.get('type'))   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
+        if not Enterprise.objects.filter(id=enterprise_id).exists():
+            return JsonResponse({'error': 8003, 'msg': "该企业不存在"})
+        user = Applicant.objects.get(id=user_id)
+        enterprise = Enterprise.objects.get(id=enterprise_id)
+        # 验证用户管理员身份
+        if user.manage_enterprise_id != enterprise_id:
+            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
+        # 返回列表
+        materials = enterprise.normal_user_material.all()
+        ma_info = []
+        if type == 4:
+            for ma in materials:
+                if int(ma.status) != 5:
+                    ma_info.append(ma.to_json())
+        else:
+            for ma in materials:
+                if int(ma.status) == type:
+                    ma_info.append(ma.to_json())
+        return JsonResponse({'error': 0, 'data': ma_info})
+
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 def to_json_member(member):

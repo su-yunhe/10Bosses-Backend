@@ -17,7 +17,7 @@ class Enterprise(models.Model):
     recruitment = models.ManyToManyField(Recruit, related_name='recruitment_belong_enterprise')
     recruit_material = models.ManyToManyField(Material, related_name='recruit_user_material')
     normal_user_material = models.ManyToManyField(Material, related_name='normal_user_material')
-    manager = models.ForeignKey(Applicant, on_delete=CASCADE, null=False)  # 公司管理人
+    manager = models.ForeignKey(Applicant, on_delete=CASCADE, null=True)  # 公司管理人
 
     def __str__(self):
         return self.name
