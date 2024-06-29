@@ -260,7 +260,6 @@ def update_enterprise(request):     # mark
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
-        user_be_manager_id = request.POST.get('user_be_manager_id', None)
         name = request.POST.get('name', None)
         profile = request.POST.get('profile', None)
         picture = request.FILES.get('picture', None)
@@ -287,21 +286,37 @@ def update_enterprise(request):     # mark
             enterprise.picture = picture
         if address:
             enterprise.address = address
-        if user_be_manager_id:
-            if not Applicant.objects.filter(id=user_be_manager_id).exists():
-                return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
-            user_be_manager = Applicant.objects.get(id=user_be_manager_id)
-            if user_be_manager.enterprise_id != user.manage_enterprise_id:
-                return JsonResponse({'error': 7007, 'msg': "目标用户不在公司"})
-            user_be_manager.manage_enterprise_id = enterprise.id
-            # for ma in user.materials:
-            #     if ma.status == 3 or ma.status == 2:
-            #         ma.status = 5
-            #         ma.save()
-            user_be_manager.save()
-            user.manage_enterprise_id = 0
-            user.save()
-            enterprise.manager = user_be_manager
+        enterprise.save()
+        return JsonResponse({'error': 0, 'msg': '修改成功'})
+
+    return JsonResponse({'error': 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def change_manager(request):     # mark
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        user_be_manager_id = request.POST.get('user_be_manager_id')
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        # 如果用户不是管理员判断
+        if user.manage_enterprise_id == 0:
+            return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
+        enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
+        # 修改实体
+        if not Applicant.objects.filter(id=user_be_manager_id).exists():
+            return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
+        user_be_manager = Applicant.objects.get(id=user_be_manager_id)
+        if user_be_manager.enterprise_id != user.manage_enterprise_id:
+            return JsonResponse({'error': 7007, 'msg': "目标用户不在公司"})
+        user_be_manager.manage_enterprise_id = enterprise.id
+        user_be_manager.save()
+        user.manage_enterprise_id = 0
+        user.save()
+        enterprise.manager = user_be_manager
         enterprise.save()
         return JsonResponse({'error': 0, 'msg': '修改成功'})
 

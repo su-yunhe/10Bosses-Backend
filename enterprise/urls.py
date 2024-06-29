@@ -11,6 +11,7 @@ urlpatterns = [
     path("create_enterprise", create_enterprise),  # 创建企业
     path("show_enterprise", show_enterprise),  # 展示企业资料
     path("update_enterprise", update_enterprise),  # 修改企业资料
+    path("change_manager", change_manager),  # 更改管理员
     path("delete_enterprise", delete_enterprise),  # 删除企业
     path("show_enterprise_member", show_enterprise_member),  # 展示企业员工名单
     path("show_recruitment_list", show_recruitment_list),  # 展示企业招聘列表
