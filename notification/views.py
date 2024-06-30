@@ -185,3 +185,73 @@ def delete_notification(request):
         notification.delete()
         return JsonResponse({"error": 0, "msg": "删除通知成功"})
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_list1(request):
+    # 获取和点赞、评论、关注相关的通知
+    if request.method == "POST":
+        # 需要传入的数据：用户user_id
+        user_id = request.POST.get("user_id")
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 2004, 'msg': "用户不存在"})
+        # 筛选出用户有关点赞、评论、转发的通知
+        results = list(Notification.objects.values().filter(user_id=user_id).filter(type__lte=3))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户消息列表1成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_list2(request):
+    # 获取和企业offer相关的通知
+    if request.method == "POST":
+        # 需要传入的数据：用户user_id
+        user_id = request.POST.get("user_id")
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 2004, 'msg': "用户不存在"})
+        # 筛选出用户企业通知
+        results = list(Notification.objects.values().filter(user_id=user_id).filter(type=4))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户消息列表2成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_list3(request):
+    # 企业管理员收到的管理企业方面的通知
+    if request.method == "POST":
+        # 需要传入：用户（即管理员）user_id
+        user_id = request.POST.get("user_id")
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 2004, 'msg': "用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if not user.manage_enterprise_id:
+            return JsonResponse({'error': 2005, 'msg': "用户不是管理员"})
+        # 筛选出用户企业通知
+        results = list(Notification.objects.values().filter(user_id=user_id).filter(type__gte=5))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户消息列表3成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, 'msg': "请求方式错误"})
+
