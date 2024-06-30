@@ -1,3 +1,4 @@
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -36,30 +37,30 @@ def open_conversation(request):
 
 
 # 发送一条私信
-@csrf_exempt
-def send_message(request):
-    if request.method == "POST":
-        userid = request.POST.get("userId")
-        conversation_id = request.POST.get("conversationId")
-        content = request.POST.get("content")
-
-        try:
-            sender = Applicant.objects.get(id=userid)
-            conversation = Conversation.objects.get(id=conversation_id)
-            # 创建并保存消息
-            message = Message.objects.create(sender=sender, conversation=conversation, content=content)
-            # 更新最后一条消息的时间戳
-            conversation.last_message = message.timestamp
-            conversation.save()
-
-            return JsonResponse({"error": 0, "msg": "消息发送成功"})
-
-        except Exception as e:
-            logger.error(f"Error sending message: {e}")
-            return JsonResponse({"error": 500, "msg": "服务器内部错误"})
-
-    else:
-        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+# @csrf_exempt
+# def send_message(request):
+#     if request.method == "POST":
+#         userid = request.POST.get("userId")
+#         conversation_id = request.POST.get("conversationId")
+#         content = request.POST.get("content")
+#
+#         try:
+#             sender = Applicant.objects.get(id=userid)
+#             conversation = Conversation.objects.get(id=conversation_id)
+#             # 创建并保存消息
+#             message = Message.objects.create(sender=sender, conversation=conversation, content=content)
+#             # 更新最后一条消息的时间戳
+#             conversation.last_message = message.timestamp
+#             conversation.save()
+#
+#             return JsonResponse({"error": 0, "msg": "消息发送成功"})
+#
+#         except Exception as e:
+#             logger.error(f"Error sending message: {e}")
+#             return JsonResponse({"error": 500, "msg": "服务器内部错误"})
+#
+#     else:
+#         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
 # 获取对话列表
