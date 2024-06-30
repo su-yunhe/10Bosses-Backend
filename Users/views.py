@@ -62,11 +62,8 @@ def register(request):
         new_user.user_name = username
         new_user.password = password1
         new_user.email = email
-        information = Information.objects.create()
-        new_user.only_information = information
         new_user.save()
-        information.only_user = new_user
-        information.save()
+
         token = create_token(username)
         return JsonResponse(
             {
@@ -227,11 +224,15 @@ def search_user(request):
         results = []
         for applicant in applicants:
             if applicant.manage_enterprise_id != 0:
-                manage_enterprise_name = Enterprise.objects.get(id=applicant.manage_enterprise_id).name
+                manage_enterprise_name = Enterprise.objects.get(
+                    id=applicant.manage_enterprise_id
+                ).name
             else:
                 manage_enterprise_name = None
             if applicant.enterprise_id != 0:
-                enterprise_name = Enterprise.objects.get(id=applicant.enterprise_id).name
+                enterprise_name = Enterprise.objects.get(
+                    id=applicant.enterprise_id
+                ).name
             else:
                 enterprise_name = None
             # 构建结果字典
@@ -271,7 +272,6 @@ def upload_pdf(request):
         return JsonResponse({"status": "fail", "message": "File upload failed"})
 
 
-# 关注用户
 @csrf_exempt
 def user_follow(request):
     if request.method == "POST":
@@ -325,6 +325,3 @@ def update_user_interest(request):
 
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
-
-
-
