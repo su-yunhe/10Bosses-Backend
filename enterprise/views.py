@@ -410,7 +410,7 @@ def show_recruitment_list(request):
 
 
 @csrf_exempt
-def normal_user_apply_enterprise(request):
+def withdraw_enterprise(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
@@ -425,43 +425,11 @@ def normal_user_apply_enterprise(request):
         # 验证用户管理员身份
         if user.manage_enterprise_id != 0:
             return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
-
-        material = Material.objects.create(enterprise=enterprise, information=user.Information)
-        enterprise.normal_user_material.add(material)
-        return JsonResponse({'error': 0, 'data': material.id})
-
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
-
-
-@csrf_exempt
-def show_enterprise_normal_material(request):
-    if request.method == "GET":
-        # 获取请求内容
-        user_id = request.GET.get('user_id')
-        enterprise_id = request.GET.get('enterprise_id')
-        type = int(request.GET.get('type'))   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
-        # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
-        if not Enterprise.objects.filter(id=enterprise_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "该企业不存在"})
-        user = Applicant.objects.get(id=user_id)
-        enterprise = Enterprise.objects.get(id=enterprise_id)
-        # 验证用户管理员身份
-        if user.manage_enterprise_id != enterprise_id:
-            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
-        # 返回列表
-        materials = enterprise.normal_user_material.all()
-        ma_info = []
-        if type == 4:
-            for ma in materials:
-                if int(ma.status) != 5:
-                    ma_info.append(ma.to_json())
-        else:
-            for ma in materials:
-                if int(ma.status) == type:
-                    ma_info.append(ma.to_json())
-        return JsonResponse({'error': 0, 'data': ma_info})
+        if user.enterprise_id != enterprise.id:
+            return JsonResponse({'error': 7009, 'msg': "操作用户不在企业内"})
+        user.enterprise_id = 0
+        enterprise.member.remove(user)
+        return JsonResponse({'error': 0, 'msg': "退出成功"})
 
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 

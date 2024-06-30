@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     "recruit",
     "Trend",
     "chat",
+    'channels',
+    'websocket',
+    'rest_framework',
+    'drf_yasg',
     "notification",
 ]
 
@@ -186,3 +190,12 @@ HAYSTACK_CONNECTIONS = {
 HAYSTACK_SIGNAL_PROCESSOR = "haystack.signals.RealtimeSignalProcessor"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+ASGI_APPLICATION = 'ScholarSHIP.asgi.application'
+
+# 添加Channels的路由
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}

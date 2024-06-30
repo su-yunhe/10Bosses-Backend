@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>hihi</title>
+    <style>
+        .row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .label {
+            flex: 1;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <form id="myForm">
+        <input type="text" name="user_id" placeholder="UserID">
+        <input type="text" name="recruit_id" placeholder="RecruitID">
+        <input type="text" name="number" placeholder="number">
+        <button type="button" id="submitButton">Submit</button>
+    </form>
+
+    <div id="container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let data = [];
+
+            fetch('http://127.0.0.1:8000/api/show_recruitment_list?enterprise_id=1&type=True')
+                .then(response => response.json())
+                .then(json => {
+                    console.log('Data fetched:', json);
+                    data = json.data;
+                    updateUI();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+
+            const container = document.getElementById('container');
+
+            function updateUI() {
+                container.innerHTML = '';
+                data.forEach((item, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'row';
+
+                    const label = document.createElement('div');
+                    label.className = 'label';
+                    label.textContent = `${item.recruit_id}: ${item.recruit_number}`;
+
+                    row.appendChild(label);
+                    container.appendChild(row);
+                });
+            }
+
+            updateUI();
+
+            console.log('Connecting to server...');
+
+            var ws = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+
+            ws.onmessage = function(event) {
+                console.log('receiving')
+                const { recruit_id, recruit_number } = JSON.parse(event.data).message;
+                console.log('receive', recruit_id, recruit_number)
+                const item = data.find(x => x.recruit_id === recruit_id);
+                if (item) {
+                    item.recruit_number = recruit_number;
+                } else {
+                    data.push({ recruit_id, recruit_number });
+                }
+                updateUI();
+            };
+        });
+
+        document.getElementById('submitButton').onclick = function() {
+            let form = document.getElementById('myForm');
+            let formData = new FormData(form);
+
+            fetch('http://127.0.0.1:8000/api/update_recruitment', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(json => {
+                console.log('Data fetched:', json);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+        };
+    </script>
+</body>
+</html>
