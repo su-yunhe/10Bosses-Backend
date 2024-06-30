@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
+from recruit.views import refresh_recruits
 from .models import Enterprise
 from recruit.models import Recruit
 from haystack.query import SearchQuerySet
@@ -197,6 +198,18 @@ def recommend_users(request):
         results = list()
         for other_user_id in user_id_set:
             user = Applicant.objects.values().get(id=other_user_id)
+            user_enterprise_id = user["enterprise_id"]
+            user_manage_enterprise_id = user["manage_enterprise_id"]
+            if user_enterprise_id:
+                enterprise_name = Enterprise.objects.get(id=user_enterprise_id).name
+                user["enterprise_name"] = enterprise_name
+            else:
+                user["enterprise_name"] = ""
+            if user_manage_enterprise_id:
+                enterprise_name = Enterprise.objects.get(id=user_enterprise_id).name
+                user["manage_enterprise_name"] = enterprise_name
+            else:
+                user["manage_enterprise_name"] = ""
             results.append(user)
         if results:
             return JsonResponse(
@@ -410,7 +423,7 @@ def show_recruitment_list(request):
 
 
 @csrf_exempt
-def withdraw_enterprise(request):
+def apply_withdraw(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
@@ -427,9 +440,41 @@ def withdraw_enterprise(request):
             return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
         if user.enterprise_id != enterprise.id:
             return JsonResponse({'error': 7009, 'msg': "操作用户不在企业内"})
-        user.enterprise_id = 0
-        enterprise.member.remove(user)
-        return JsonResponse({'error': 0, 'msg': "退出成功"})
+        enterprise.withdraw.add(user)
+        return JsonResponse({'error': 0, 'msg': "提交退出申请成功"})
+
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def user_enter_enterprise(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        material_id = request.POST.get('material_id')
+        type = request.POST.get('type')  # accept 接受进入企业，refuse 拒绝进入企业
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        if not Material.objects.filter(id=material_id).exists():
+            return JsonResponse({'error': 8003, 'msg': "操作材料不存在"})
+        user = Applicant.objects.get(id=user_id)
+        material = Material.objects.get(id=material_id)
+        enterprise = material.enterprise
+        # 验证用户管理员身份
+        if user.manage_enterprise_id != 0:
+            return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
+        if user.enterprise_id != 0:
+            return JsonResponse({'error': 7009, 'msg': "操作用户已在企业内"})
+        if type == 'refuse':
+            material.status = 6
+            material.recruit.number = material.recruit.number+1
+            refresh_recruits(material.recruit.id, material.recruit.number)
+        if type == 'accept':
+            material.status = 1
+            enterprise.member.add(user)
+        material.save()
+        return JsonResponse({'error': 0, 'msg': "操作成功"})
 
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 

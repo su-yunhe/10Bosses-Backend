@@ -159,7 +159,7 @@ def update_recruitment(request):
         if address:
             recruit.address = address
         recruit.save()
-        refresh_recruits({"recruit_id": recruit.id, "recruit_number": recruit.number})
+        refresh_recruits(recruit.id, recruit.number)
         return JsonResponse({'error': 0, 'msg': '修改成功'})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
@@ -364,7 +364,7 @@ def manage_apply_material(request):
         material.status = type
         if type == 2 and material.recruit:
             material.recruit.number = material.recruit.number-1
-            refresh_recruits({"recruit_id": material.recruit.id, "recruit_number": material.recruit.number})
+            refresh_recruits(material.recruit.id, material.recruit.number)
         material.save()
         return JsonResponse({'error': 0, 'msg': "已审核"})
 
@@ -491,14 +491,18 @@ def get_intended_recruitment(request):
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
-def refresh_recruits(json):
+def refresh_recruits(id, number):
+    json = {
+        "recruit_id": id,
+        "recruit_number": number,
+    }
     channel_layer = get_channel_layer()
     print('json: ', json)
     async_to_sync(channel_layer.group_send)(
         'recruitment_update',
         {
-            "type": "update_message",
-            "message": json
+            "type": 'update_recruit',
+            "data": json
         }
     )
     return
