@@ -12,4 +12,5 @@ urlpatterns = [
     path("get_trend_comments", get_trend_comments),
     path("delete_like", delete_like),
     path("transport_trend", transport_trend),
+    path("upload_picture", upload_picture),
 ]
