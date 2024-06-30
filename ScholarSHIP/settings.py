@@ -46,11 +46,11 @@ INSTALLED_APPS = [
     "recruit",
     "Trend",
     "chat",
-
     'channels',
     'websocket',
     'rest_framework',
     'drf_yasg',
+    "notification",
 ]
 
 MIDDLEWARE = [

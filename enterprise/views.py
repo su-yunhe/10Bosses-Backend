@@ -30,7 +30,7 @@ def enterprise_search(request):
                     continue
                 print(search_name)
                 # 进行模糊搜索
-                # 调用whoosh引擎进行搜索
+                # 调用whoosh引擎进行搜索，暂时不使用
                 # sqs = SearchQuerySet().filter(content=search_name)
                 # for result in sqs:
                 #     search_results.add(result.object.id)
@@ -65,19 +65,30 @@ def enterprise_search(request):
                     }
                 })
         else:
-            # 用户没有提供关键词,只返回一些招聘
-            recruitments = list(Recruit.objects.values().all())
-            for recruitment in recruitments:
-                rec_enter_id = recruitment["enterprise_id"]
-                enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
-                recruitment["enterprise_name"] = enterprise_name
-            print(recruitments)
+            # 用户没有提供关键词,返回所有企业
+            enterprise_list = list(Enterprise.objects.values().all())
+            results = list()
+            for enterprise in enterprise_list:
+                # 通过企业管理员id获取其真实姓名
+                manager_id = enterprise["manager_id"]
+                manager_name = Applicant.objects.get(id=manager_id).user_name
+                # 修改字段
+                enterprise["manager_name"] = manager_name
+                del enterprise["manager_id"]
+                # 获取企业招聘列表
+                recruitments = list(Recruit.objects.values().filter(enterprise_id=enterprise["id"]))
+                for recruitment in recruitments:
+                    rec_enter_id = recruitment["enterprise_id"]
+                    enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
+                    recruitment["enterprise_name"] = enterprise_name
+                # print(recruitments)
+                results.append({"enterprise": enterprise, "recruitment": recruitments})
             return JsonResponse(
                 {
                     "error": 0,
-                    "msg": "关键词为空，返回所有招聘信息供用户浏览",
+                    "msg": "关键词为空，返回所有企业",
                     "data": {
-                        "results": recruitments
+                        "results": results
                     }
                 })
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
