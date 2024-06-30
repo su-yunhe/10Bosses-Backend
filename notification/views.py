@@ -11,10 +11,17 @@ from recruit.models import Recruit
 
 
 # 需要实现：
+# 发送通知部分：
 # 1. 企业审核通过（不通过）用户投递的简历后，系统给用户发送该企业的加入邀请（拒绝）通知
 # 2. 用户同意（拒绝）加入企业后，系统给企业管理员发送通知
 # 3. 企业员工退出企业，系统给企业管理员发送通知
 # 4. 点赞、评论、关注通知在动态部分实现
+# 通知展示部分：
+# 1. 获取用户通知列表
+# 2. 获取通知详情
+# 3. 通知已读标记
+# 4. 用户删除通知
+
 
 @csrf_exempt
 def employee_quit_notification(request):
@@ -62,8 +69,7 @@ def resume_notification(request):
         enterprise_id = Recruit.objects.get(id=recruitment_id).enterprise_id
         enterprise_name = Enterprise.objects.get(id=enterprise_id).name
         position = Recruit.objects.get(id=recruitment_id).post
-        message = ""
-        is_passed = True if is_passed == 1 else False
+        is_passed = True if is_passed == "1" else False
         if is_passed:
             message = "您投递在 " + enterprise_name + " 公司 " + position + " 岗位的简历已被通过！管理员邀请您加入企业，请及时进行企业员工认证~"
         else:
@@ -101,7 +107,7 @@ def user_reply_notification(request):
         user_name = Applicant.objects.get(id=user_id).user_name
         # 获取岗位名
         position = Recruit.objects.get(id=recruitment_id).post
-        is_agreed = True if is_agreed == 1 else False
+        is_agreed = True if is_agreed == "1" else False
         if is_agreed:
             message = f"您发放的 {position} 岗位的offer已被用户 {user_name} 接受，用户已成为公司旗下员工，详情进入员工列表查看"
         else:
@@ -121,4 +127,61 @@ def user_reply_notification(request):
                 "msg": "系统消息发送成功",
             }
         )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_list(request):
+    # 获取用户消息列表
+    if request.method == "POST":
+        # 需要传入：用户user_id
+        user_id = request.POST.get("user_id")
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 2004, 'msg': "用户不存在"})
+        results = list(Notification.objects.values().filter(user_id=user_id))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户消息列表成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_detail(request):
+    # 获取通知详细信息
+    if request.method == "POST":
+        # 需要传入：通知notification_id
+        notification_id = request.POST.get("notification_id")
+        notification = Notification.objects.get(id=notification_id)
+        notification.is_read = 1
+        notification.save()
+        results = list(Notification.objects.values().filter(id=notification_id))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取通知详情成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def delete_notification(request):
+    # 用户删除通知
+    if request.method == "POST":
+        # 需要传入的数据：通知notification_id
+        notification_id = request.POST.get("notification_id")
+        if not Notification.objects.filter(id=notification_id).exists():
+            return JsonResponse({'error': 2005, 'msg': "通知不存在"})
+        notification = Notification.objects.get(id=notification_id)
+        notification.delete()
+        return JsonResponse({"error": 0, "msg": "删除通知成功"})
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})

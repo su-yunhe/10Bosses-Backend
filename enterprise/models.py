@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import CASCADE
-from Users.models import Applicant
+from Users.models import Applicant, Information
 from recruit.models import Material, Recruit
 
 
@@ -24,3 +24,10 @@ class Enterprise(models.Model):
 
     class Meta:
         db_table = "enterprise_enterprise"
+
+
+class UserInformationEnterprise(models.Model):
+    id = models.AutoField(primary_key=True)
+    post = models.CharField(max_length=128, default="")
+    join_data = models.DateField(auto_now_add=True)
+    user = models.ForeignKey('Users.Applicant', on_delete=CASCADE, null=True)
