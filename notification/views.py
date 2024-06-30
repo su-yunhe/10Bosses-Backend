@@ -75,7 +75,45 @@ def resume_notification(request):
         notification.type = 4
         notification.message = message
         notification.time = datetime.now()
-        notification.related_enterprise_id = enterprise_id
+        notification.related_recruitment_id = recruitment_id
+        notification.save()
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "系统消息发送成功",
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def user_reply_notification(request):
+    # 用户回复（同意加入或拒绝）企业邀请的通知
+    if request.method == "POST":
+        # 需要传入：用户user_id，招聘recruitment_id，是否同意is_agreed
+        user_id = request.POST.get("user_id")
+        recruitment_id = request.POST.get("recruitment_id")
+        is_agreed = request.POST.get("is_agreed")
+        # 获取企业管理员
+        enterprise_id = Recruit.objects.get(id=recruitment_id).enterprise_id
+        manager_id = Enterprise.objects.get(id=enterprise_id).manager_id
+        # 获取用户名
+        user_name = Applicant.objects.get(id=user_id).user_name
+        # 获取岗位名
+        position = Recruit.objects.get(id=recruitment_id).post
+        is_agreed = True if is_agreed == 1 else False
+        if is_agreed:
+            message = f"您发放的 {position} 岗位的offer已被用户 {user_name} 接受，用户已成为公司旗下员工，详情进入员工列表查看"
+        else:
+            message = f"您发放的 {position} 岗位的offer已被用户 {user_name} 拒绝"
+        notification = Notification()
+        notification.user_id = manager_id
+        notification.title = "用户回复"
+        notification.type = 4
+        notification.message = message
+        notification.time = datetime.now()
+        notification.related_user_id = user_id
+        notification.related_recruitment_id = recruitment_id
         notification.save()
         return JsonResponse(
             {
