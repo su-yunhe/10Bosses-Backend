@@ -72,8 +72,10 @@ def resume_notification(request):
         is_passed = True if is_passed == "1" else False
         if is_passed:
             message = "您投递在 " + enterprise_name + " 公司 " + position + " 岗位的简历已被通过！管理员邀请您加入企业，请及时进行企业员工认证~"
+            attachment = 1
         else:
             message = "您投递在 " + enterprise_name + " 公司 " + position + " 岗位的简历并未被通过。尝试使用10bosses提供的AI简历优化能提高被企业录用的概率哦~"
+            attachment = 0
         # 构建消息实体
         notification = Notification()
         notification.user_id = user_id
@@ -82,6 +84,7 @@ def resume_notification(request):
         notification.message = message
         notification.time = datetime.now()
         notification.related_recruitment_id = recruitment_id
+        notification.attachment = attachment
         notification.save()
         return JsonResponse(
             {

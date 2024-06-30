@@ -291,3 +291,16 @@ def upload_picture(request):
         return JsonResponse({"error": 0, "msg": "图片上传成功"})
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_enterprise_trends(request):
+    # 获取企业所有动态
+    if request.method == "POST":
+        # 需要传入：企业enterprise_id
+        enterprise_id = request.POST.get("enterprise_id")
+        # 获取企业员工
+        enterprise_member_list = list(Enterprise.objects.values().get(id=enterprise_id))
+        for member in enterprise_member_list:
+            print(member)
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
