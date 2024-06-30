@@ -344,9 +344,11 @@ def change_manager(request):     # mark
             return JsonResponse({'error': 7007, 'msg': "目标用户不在公司"})
         user_be_manager.manage_enterprise_id = enterprise.id
         user_be_manager.user_information_enterprise.post = "企业管理员"
+        user_be_manager.user_information_enterprise.save()
         user_be_manager.save()
         user.manage_enterprise_id = 0
         user.user_information_enterprise.post = "暂无"
+        user.user_information_enterprise.save()
         user.save()
         enterprise.manager = user_be_manager
         if user_be_manager in enterprise.withdraw.all():
