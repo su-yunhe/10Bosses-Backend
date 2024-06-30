@@ -1,7 +1,26 @@
+import os.path
+from datetime import datetime
+
 from django.db import models
 from django.db.models import CASCADE, SET_NULL
 from Users.models import Applicant
 import json
+
+
+def custom_vitae_upload_to(instance, filename):
+    now = datetime.now()
+
+    new_filename = f'{instance.id}_vitae_{now.strftime("%Y%m%d%H%M%S")}.pdf'
+
+    return os.path.join('material_curriculum/', new_filename)
+
+
+def custom_certificate_upload_to(instance, filename):
+    now = datetime.now()
+
+    new_filename = f'{instance.id}_certificate_{now.strftime("%Y%m%d%H%M%S")}.pdf'
+
+    return os.path.join('certificate/', new_filename)
 
 
 # Create your models here.
@@ -29,22 +48,22 @@ class Material(models.Model):
     enterprise = models.ForeignKey('enterprise.Enterprise', on_delete=CASCADE, null=True)
     submit_time = models.DateField(auto_now_add=True)  # 发布时间
     information = models.ForeignKey('Users.Information', on_delete=CASCADE, null=True)
-    curriculum_vitae = models.FileField(upload_to='material_curriculum/', blank=True)  # 电子简历
-    certificate = models.FileField(upload_to='certificate/', blank=True)  # 证书
+    curriculum_vitae = models.FileField(upload_to=custom_vitae_upload_to, blank=True)  # 电子简历
+    certificate = models.FileField(upload_to=custom_certificate_upload_to, blank=True)  # 证书
 
     def to_json(self):
         info = {
             "material_id": self.id,
             "material_status": self.status,
-            "material_user_id": self.information.user.id,
-            "material_user_name": self.information.user.user_name,
+            "material_user_id": self.information.only_user.id,
+            "material_user_name": self.information.only_user.user_name,
             "user_real_name": self.information.name,
             "user_gender": self.information.gender,
             "user_native_place": self.information.native_place,
             "user_nationality": self.information.nationality,
             "user_birthday": self.information.birthday,
             "user_marriage": self.information.marriage,
-            "user_email": self.information.user.email,
+            "user_email": self.information.only_user.email,
             "user_phone": self.information.phone,
             "user_education": self.information.education,
             "user_school": self.information.school,

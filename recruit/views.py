@@ -31,8 +31,8 @@ def publish_recruitment(request):
         experience = request.POST.get('experience', None)
         requirement = request.POST.get('requirement', None)
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-             return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #      return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         # 如果用户不是管理员判断
         if user.manage_enterprise_id == 0:
@@ -115,8 +115,8 @@ def update_recruitment(request):
         requirement = request.POST.get('requirement', None)
 
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-             return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #      return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
         if not Recruit.objects.filter(id=recruit_id).exists():
             return JsonResponse({'error': 8006, 'msg': "操作招聘不存在"})
         user = Applicant.objects.get(id=user_id)
@@ -166,15 +166,15 @@ def update_recruitment(request):
 
 
 @csrf_exempt
-def close_recruitment(request):
+def manage_recruitment(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
         recruit_id = request.POST.get('recruit_id')
         type = request.POST.get('type')  # True 重新开启  False 关闭
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-             return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #      return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
         if not Recruit.objects.filter(id=recruit_id).exists():
             return JsonResponse({'error': 8006, 'msg': "操作招聘不存在"})
         user = Applicant.objects.get(id=user_id)
@@ -183,7 +183,7 @@ def close_recruitment(request):
         if user.manage_enterprise_id != recruit.enterprise.id:
             return JsonResponse({'error': 8003, 'msg': "操作用户非管理员"})
         # 修改招募
-        if not type:
+        if type == 'False':
             recruit.status = False
         else:
             recruit.status = True
@@ -202,8 +202,8 @@ def delete_recruitment(request):
         user_id = request.POST.get('user_id')
         recruit_id = request.POST.get('recruit_id')
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-             return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #      return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
         if not Recruit.objects.filter(id=recruit_id).exists():
             return JsonResponse({'error': 8006, 'msg': "操作招聘不存在"})
         user = Applicant.objects.get(id=user_id)
@@ -215,7 +215,7 @@ def delete_recruitment(request):
         recruit.delete()
         return JsonResponse({'error': 0, 'msg': '删除成功'})
         # 删除招聘
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -227,20 +227,20 @@ def user_apply_recruit(request):
         curriculum_vitae = request.FILES.get('curriculum_vitae', None)
         certificate = request.FILES.get('certificate', None)
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
         if not Recruit.objects.filter(id=recruit_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "操作招募不存在"})
+            return JsonResponse({'error': 8006, 'msg': "操作招募不存在"})
         user = Applicant.objects.get(id=user_id)
         recruit = Recruit.objects.get(id=recruit_id)
         enterprise = Enterprise.objects.get(id=recruit.enterprise.id)
         # 验证用户管理员身份
         if user.manage_enterprise_id != 0:
-            return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
+            return JsonResponse({'error': 8009, 'msg': "操作用户是管理员"})
         if not recruit.status:
-            return JsonResponse({'error': 7004, 'msg': "操作招聘已关闭"})
+            return JsonResponse({'error': 8008, 'msg': "操作招聘已关闭"})
         # 返回列表
-        material = Material.objects.create(recruit=recruit, enterprise=enterprise, information=user.Information)
+        material = Material.objects.create(recruit=recruit, enterprise=enterprise, information=user.only_information)
         if curriculum_vitae:
             material.curriculum_vitae = curriculum_vitae
         else:
@@ -250,9 +250,10 @@ def user_apply_recruit(request):
         recruit.user_material.add(material)
         enterprise.recruit_material.add(material)
         material.save()
+        user.user_material.add(material)
         return JsonResponse({'error': 0, 'data': material.id})
 
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -263,15 +264,15 @@ def show_enterprise_recruit_material(request):
         enterprise_id = request.GET.get('enterprise_id')
         type = int(request.GET.get('type'))   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
         if not Enterprise.objects.filter(id=enterprise_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "该企业不存在"})
+            return JsonResponse({'error': 8004, 'msg': "操作企业不存在"})
         user = Applicant.objects.get(id=user_id)
         enterprise = Enterprise.objects.get(id=enterprise_id)
         # 验证用户管理员身份
-        if user.manage_enterprise_id != enterprise_id:
-            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
+        if user.manage_enterprise_id != int(enterprise_id):
+            return JsonResponse({'error': 8003, 'msg': "操作用户非管理员"})
         # 返回列表
         materials = enterprise.recruit_material.all()
         ma_info = []
@@ -285,7 +286,7 @@ def show_enterprise_recruit_material(request):
                     ma_info.append(to_json_material(ma))
         return JsonResponse({'error': 0, 'data': ma_info})
 
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -296,15 +297,15 @@ def show_recruit_material(request):
         recruit_id = request.GET.get('recruit_id')
         type = int(request.GET.get('type'))   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
         if not Recruit.objects.filter(id=recruit_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "该招募不存在"})
+            return JsonResponse({'error': 8006, 'msg': "操作招聘不存在"})
         user = Applicant.objects.get(id=user_id)
         recruit = Recruit.objects.get(id=recruit_id)
         # 验证用户管理员身份
         if user.manage_enterprise_id != recruit.enterprise.id:
-            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
+            return JsonResponse({'error': 8003, 'msg': "操作用户非管理员"})
         # 返回列表
         materials = recruit.user_material.all()
         ma_info = []
@@ -315,31 +316,58 @@ def show_recruit_material(request):
         else:
             for ma in materials:
                 if int(ma.status) == type:
-                    ma_info.append(ma.to_json())
+                    ma_info.append(to_json_material(ma))
         return JsonResponse({'error': 0, 'data': ma_info})
 
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
 
-def show_material_single(request):
-    if request.method == "POST":
+@csrf_exempt
+def show_user_material(request):
+    if request.method == "GET":
         # 获取请求内容
-        user_id = request.POST.get('user_id')
-        material_id = request.POST.get('material_id')
+        user_id = request.GET.get('user_id')
+        type = int(request.GET.get('type'))   # 4 返回全部 3 待审核 2 已通过 1 已录用 0 未通过
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
-        if not Material.objects.filter(id=material_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "该材料不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        # 返回列表
+        materials = user.user_material.all()
+        ma_info = []
+        if type == 4:
+            for ma in materials:
+                if int(ma.status) != 5:
+                    ma_info.append(to_json_material(ma))
+        else:
+            for ma in materials:
+                if int(ma.status) == type:
+                    ma_info.append(to_json_material(ma))
+        return JsonResponse({'error': 0, 'data': ma_info})
+
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def show_material_single(request):
+    if request.method == "GET":
+        # 获取请求内容
+        user_id = request.GET.get('user_id')
+        material_id = request.GET.get('material_id')
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 8002, 'msg': "该用户不存在"})
+        # if not Material.objects.filter(id=material_id).exists():
+        #     return JsonResponse({'error': 8011, 'msg': "该简历材料不存在"})
         user = Applicant.objects.get(id=user_id)
         material = Material.objects.get(id=material_id)
         # 验证管理员身份
-        if user != material.user and user != material.recruit.enterprise.manager:
-            return JsonResponse({'error': 7004, 'msg': "该用户无权限"})
+        if user != material.information.only_user and user != material.recruit.enterprise.manager:
+            return JsonResponse({'error': 8010, 'msg': "该用户无权限"})
         # 返回信息
-        return JsonResponse({'error': 0, 'data': material.to_json()})
+        return JsonResponse({'error': 0, 'data': to_json_material(material)})
 
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -350,34 +378,36 @@ def manage_apply_material(request):
         material_id = request.POST.get('material_id')
         type = int(request.POST.get('type'))   # 2 通过 0 不通过
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "该用户不存在"})
-        if not Material.objects.filter(id=material_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "该招聘不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
+        # if not Material.objects.filter(id=material_id).exists():
+        #     return JsonResponse({'error': 8006, 'msg': "操作材料不存在"})
         user = Applicant.objects.get(id=user_id)
-        material = Enterprise.objects.get(id=material_id)
+        material = Material.objects.get(id=material_id)
         # 验证用户管理员身份
         if user.manage_enterprise_id != material.recruit.enterprise.id:
-            return JsonResponse({'error': 7004, 'msg': "该用户非该公司管理员"})
-        if material.status != 3:
-            return JsonResponse({'error': 7004, 'msg': "已被审核"})
+            return JsonResponse({'error': 8003, 'msg': "操作用户非管理员"})
+        if int(material.status) != 3:
+            return JsonResponse({'error': 8012, 'msg': "简历已被审核，审核无效"})
         material.status = type
-        if type == 2 and material.recruit:
-            material.recruit.number = material.recruit.number-1
-            refresh_recruits(material.recruit.id, material.recruit.number)
+        if type == 2:
+            recruit = material.recruit
+            recruit.number = recruit.number-1
+            recruit.save()
+            refresh_recruits(recruit.id, recruit.number)
         material.save()
         return JsonResponse({'error': 0, 'msg': "已审核"})
 
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
 
 def to_json_material(material):
     information = material.information
-    return json.dumps({
+    return ({
         "material_id": material.id,
         "material_status": material.status,
-        "material_user_id": material.user.id,
-        "material_user_name": material.user.user_name,
+        "material_user_id": information.only_user.id,
+        "material_user_name": information.only_user.user_name,
         "material_recruit_id": material.recruit.id,
         "material_recruit_post": material.recruit.post,
         "user_real_name": information.name,
@@ -386,7 +416,7 @@ def to_json_material(material):
         "user_nationality": information.nationality,
         "user_birthday": information.birthday,
         "user_marriage": information.marriage,
-        "user_email": information.user.email,
+        "user_email": information.only_user.email,
         "user_phone": information.phone,
         "user_education": information.education,
         "user_school": information.school,

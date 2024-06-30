@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import CASCADE
+from django.db.models import CASCADE, SET_NULL
 
 
 class Applicant(models.Model):
@@ -17,6 +17,8 @@ class Applicant(models.Model):
     is_upload = models.BooleanField(default=False)
     followers = models.ManyToManyField('self', symmetrical=False, related_name='following')
     only_information = models.ForeignKey('Information', on_delete=CASCADE, null=True)
+    user_information_enterprise = models.ForeignKey('enterprise.UserInformationEnterprise', on_delete=SET_NULL, null=True)
+    user_material = models.ManyToManyField('recruit.Material', related_name='user_all_material')
 
     class Meta:
         db_table = "applicant_info"

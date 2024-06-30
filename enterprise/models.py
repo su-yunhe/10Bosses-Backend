@@ -1,7 +1,18 @@
+import os
+from datetime import datetime
+
 from django.db import models
 from django.db.models import CASCADE
 from Users.models import Applicant, Information
 from recruit.models import Material, Recruit
+
+
+def custom_enterprise_picture_upload_to(instance, filename):
+    now = datetime.now()
+
+    new_filename = f'{instance.id}_enterprise_picture_{now.strftime("%Y%m%d%H%M%S")}.pdf'
+
+    return os.path.join('enterprise/', new_filename)
 
 
 # Create your models here.
@@ -9,7 +20,7 @@ class Enterprise(models.Model):
     id = models.AutoField(primary_key=True)  # id
     name = models.CharField(max_length=128, default="")  # 名称
     profile = models.TextField(default="")
-    picture = models.ImageField(upload_to='enterprise/', max_length=225, null=False, default='enterprise/default.jpg') # 设置一个默认路径
+    picture = models.ImageField(upload_to=custom_enterprise_picture_upload_to, max_length=225, null=False, default='enterprise/default.jpg') # 设置一个默认路径
     address = models.TextField(default="")
     member = models.ManyToManyField(Applicant, related_name='member_enterprise')
     fans = models.ManyToManyField(Applicant, related_name='user_like_enterprise')
@@ -29,5 +40,5 @@ class Enterprise(models.Model):
 class UserInformationEnterprise(models.Model):
     id = models.AutoField(primary_key=True)
     post = models.CharField(max_length=128, default="")
-    join_data = models.DateField(auto_now_add=True)
+    join_date = models.DateField(auto_now_add=True)
     user = models.ForeignKey('Users.Applicant', on_delete=CASCADE, null=True)

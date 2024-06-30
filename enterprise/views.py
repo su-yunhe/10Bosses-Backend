@@ -5,10 +5,11 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from recruit.views import refresh_recruits
-from .models import Enterprise
+from .models import Enterprise, UserInformationEnterprise
 from recruit.models import Recruit
 from haystack.query import SearchQuerySet
 from ScholarSHIP import settings
+from datetime import date
 
 import base64
 from django.shortcuts import get_object_or_404
@@ -241,10 +242,10 @@ def create_enterprise(request):
         # 获取实体
         if Enterprise.objects.filter(name=name).exists():
             return JsonResponse({'error': 7009, 'msg': "公司名重复"})
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
-        if user.manage_enterprise_id != 0 or user.enterprise_id != 0:
+        if user.enterprise_id != 0:
             return JsonResponse({'error': 7003, 'msg': "操作用户已在公司内"})
         # 创建实体
         enterprise = Enterprise.objects.create(name=name, profile=profile, address=address, manager=user)
@@ -254,7 +255,12 @@ def create_enterprise(request):
             enterprise.save()
         user.manage_enterprise_id = enterprise.id
         user.enterprise_id = enterprise.id
+        information_enterprise = UserInformationEnterprise.objects.create(post="企业管理员", user=user)
+        user.user_information_enterprise = information_enterprise
         user.save()
+        materials = user.user_material.all()
+        for ma in materials:
+            ma.delete()
         return JsonResponse({'error': 0, 'data': enterprise.id})
 
     return JsonResponse({"error": 7001, 'msg': "请求方式错误"})
@@ -289,8 +295,8 @@ def update_enterprise(request):     # mark
         picture = request.FILES.get('picture', None)
         address = request.POST.get('address', None)
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         # 如果用户不是管理员判断
         if user.manage_enterprise_id == 0:
@@ -323,25 +329,32 @@ def change_manager(request):     # mark
         user_id = request.POST.get('user_id')
         user_be_manager_id = request.POST.get('user_be_manager_id')
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         # 如果用户不是管理员判断
         if user.manage_enterprise_id == 0:
             return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
         enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
         # 修改实体
-        if not Applicant.objects.filter(id=user_be_manager_id).exists():
-            return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
+        # if not Applicant.objects.filter(id=user_be_manager_id).exists():
+        #     return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
         user_be_manager = Applicant.objects.get(id=user_be_manager_id)
         if user_be_manager.enterprise_id != user.manage_enterprise_id:
             return JsonResponse({'error': 7007, 'msg': "目标用户不在公司"})
         user_be_manager.manage_enterprise_id = enterprise.id
+        user_be_manager.user_information_enterprise.post = "企业管理员"
         user_be_manager.save()
         user.manage_enterprise_id = 0
+        user.user_information_enterprise.post = "暂无"
         user.save()
         enterprise.manager = user_be_manager
+        if user_be_manager in enterprise.withdraw.all():
+            enterprise.withdraw.remove(user_be_manager)
         enterprise.save()
+        materials = user_be_manager.user_material.all()
+        for ma in materials:
+            ma.delete()
         return JsonResponse({'error': 0, 'msg': '修改成功'})
 
     return JsonResponse({'error': 7001, "msg": "请求方式错误"})
@@ -353,8 +366,8 @@ def delete_enterprise(request):
         # 获取请求内容
         user_id = request.POST.get('user_id')
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         # 如果用户不是管理员判断
         if user.manage_enterprise_id == 0:
@@ -383,8 +396,8 @@ def show_enterprise_member(request):
         # 获取请求内容
         user_id = request.GET.get('user_id')
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         if user.enterprise_id == 0:
             return JsonResponse({'error': 7008, 'msg': "操作用户不在公司内"})
@@ -406,7 +419,7 @@ def show_recruitment_list(request):
     if request.method == "GET":
         # 获取请求内容
         enterprise_id = request.GET.get('enterprise_id')
-        type = request.GET.get('type')
+        type = request.GET.get('type')  # True: 正在招募， False: 结束招募
         # 获取实体
         if not Enterprise.objects.filter(id=enterprise_id).exists():
             return JsonResponse({'error': 7004, 'msg': "该公司不存在"})
@@ -414,9 +427,35 @@ def show_recruitment_list(request):
         recruits = enterprise.recruitment.all()
         # 返回信息
         data = []
-        for recruit in recruits:
-            if str(recruit.status) == type:
+        if type == 'All':
+            for recruit in recruits:
                 data.append(to_json_recruit(recruit))
+        else:
+            for recruit in recruits:
+                if str(recruit.status) == type:
+                    data.append(to_json_recruit(recruit))
+        return JsonResponse({'error': 0, 'data': data})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+def show_withdraw_list(request):
+    if request.method == "GET":
+        # 获取请求内容
+        user_id = request.GET.get('user_id')
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if user.manage_enterprise_id == 0:
+            return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
+        enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
+        withdraws = enterprise.withdraw.all()
+        # 返回信息
+        data = []
+        for member in withdraws:
+            if member != user:
+                data.append(to_json_member(member))
         return JsonResponse({'error': 0, 'data': data})
 
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
@@ -427,23 +466,57 @@ def apply_withdraw(request):
     if request.method == "POST":
         # 获取请求内容
         user_id = request.POST.get('user_id')
-        enterprise_id = request.POST.get('enterprise_id')
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
-        if not Enterprise.objects.filter(id=enterprise_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "操作企业不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
-        enterprise = Enterprise.objects.get(id=enterprise_id)
+        if user.enterprise_id == 0:
+            return JsonResponse({'error': 7008, 'msg': "操作用户不在公司内"})
+        enterprise = Enterprise.objects.get(id=user.enterprise_id)
         # 验证用户管理员身份
         if user.manage_enterprise_id != 0:
-            return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
-        if user.enterprise_id != enterprise.id:
-            return JsonResponse({'error': 7009, 'msg': "操作用户不在企业内"})
+            return JsonResponse({'error': 7010, 'msg': "操作用户是管理员"})
         enterprise.withdraw.add(user)
         return JsonResponse({'error': 0, 'msg': "提交退出申请成功"})
 
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def manage_withdraw(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        user_out_id = request.POST.get('user_out_id')
+        type = request.POST.get('type')  # accept 同意， refuse 拒绝
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        # 如果用户不是管理员判断
+        if user.manage_enterprise_id == 0:
+            return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
+        enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
+        # if user_id == user_out_id:
+        #     return JsonResponse({'error': 7010, 'msg': "操作用户是管理员"})
+        # 修改实体
+        # if not Applicant.objects.filter(id=user_out_id).exists():
+        #     return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
+        user_out = Applicant.objects.get(id=user_out_id)
+        if user_out not in enterprise.withdraw.all():
+            return JsonResponse({'error': 7007, 'msg': "目标用户不在退出列表"})
+        if type == "accept":
+            user_out.user_information_enterprise.delete()
+            user_out.user_information_enterprise = None
+            user_out.enterprise_id = 0
+            user_out.save()
+            enterprise.member.remove(user_out)
+            enterprise.withdraw.remove(user_out)
+        else:
+            enterprise.withdraw.remove(user_out)
+        return JsonResponse({'error': 0, 'msg': "已处理"})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
 @csrf_exempt
@@ -452,40 +525,81 @@ def user_enter_enterprise(request):
         # 获取请求内容
         user_id = request.POST.get('user_id')
         material_id = request.POST.get('material_id')
-        type = request.POST.get('type')  # accept 接受进入企业，refuse 拒绝进入企业
+        type = request.POST.get('type')  # accept 用户同意进入企业，refuse 用户拒绝企业
         # 获取实体
-        if not Applicant.objects.filter(id=user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
-        if not Material.objects.filter(id=material_id).exists():
-            return JsonResponse({'error': 8003, 'msg': "操作材料不存在"})
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        # if not Material.objects.filter(id=material_id).exists():
+        #     return JsonResponse({'error': 8003, 'msg': "操作材料不存在"})
         user = Applicant.objects.get(id=user_id)
         material = Material.objects.get(id=material_id)
         enterprise = material.enterprise
         # 验证用户管理员身份
         if user.manage_enterprise_id != 0:
-            return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
+            return JsonResponse({'error': 7002, 'msg': "操作用户是管理员"})
+        if int(user_id) != material.information.only_user.id:
+            return JsonResponse({'error': 7012, 'msg': "操作用户不是简历拥有着"})
         if user.enterprise_id != 0:
-            return JsonResponse({'error': 7009, 'msg': "操作用户已在企业内"})
+            return JsonResponse({'error': 7003, 'msg': "操作用户已在公司内"})
+        if int(material.status) != 2:
+            return JsonResponse({'error': 7011, 'msg': "简历状态错误"})
         if type == 'refuse':
             material.status = 6
-            material.recruit.number = material.recruit.number+1
-            refresh_recruits(material.recruit.id, material.recruit.number)
+            recruit = material.recruit
+            recruit.number = recruit.number+1
+            recruit.save()
+            refresh_recruits(recruit.id, recruit.number)
         if type == 'accept':
             material.status = 1
             enterprise.member.add(user)
+            information_enterprise = UserInformationEnterprise.objects.create(post=material.recruit.post, user=user)
+            user.user_information_enterprise = information_enterprise
+            user.enterprise_id = enterprise.id
+            user.save()
         material.save()
         return JsonResponse({'error': 0, 'msg': "操作成功"})
 
-    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def add_user_information_enterprise(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        join_date = request.POST.get('join_date', None)
+        post = request.POST.get('post', None)
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if user.enterprise_id == 0:
+            return JsonResponse({'error': 7008, 'msg': "操作用户不在公司内"})
+        user_information_enterprise = user.user_information_enterprise
+        if post:
+            user_information_enterprise.post = post
+        if join_date:
+            user_information_enterprise.join_date = join_date
+        user_information_enterprise.save()
+        return JsonResponse({'error': 0, 'msg': "修改成功"})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
 def to_json_member(member):
+    user_information_enterprise = member.user_information_enterprise
+    today = date.today()
+    join_date = user_information_enterprise.join_date
+    seniority = today.year - join_date.year - ((today.month, today.day) < (join_date.month, join_date.day))
     info = {
         "user_id": member.id,
         "user_name": member.user_name,
         "user_email": member.email,
         "user_interests": member.interests,
         "background": member.background,
+        "post": user_information_enterprise.post,
+        "join_data": join_date,
+        "seniority": seniority
     }
     return info
 
