@@ -1,3 +1,232 @@
-from django.shortcuts import render
+import os
+from django import forms
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import re
 
-# Create your views here.
+
+from enterprise.models import Enterprise
+from django.utils import timezone
+import requests
+from recruit.models import *
+
+from utils.token import create_token
+from .models import *
+
+
+@csrf_exempt
+def trend_add(request):
+    if request.method == "POST":
+        userid = request.POST.get("userId")
+        content = request.POST.get("content")
+        type = request.POST.get("type")
+        transpond_id = request.POST.get(
+            "transpond_id"
+        )  # 如果不是转发,传0,是的话则转对应动态的id
+        tags = ["C开发", "测试开发", "vue开发"]
+        print(tags)
+        new_trend = Dynamic()
+        new_trend.user_id = userid
+        new_trend.content = content
+        new_trend.type = type
+        new_trend.transpond_id = transpond_id
+        new_trend.save()
+        for tag in tags:
+            print(tag)
+            temp = Tag.objects.create(trend_id=new_trend.id, recruit_name=tag)
+            print(temp)
+        return JsonResponse({"error": 0, "msg": "发布动态成功"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_person_single_trend(request):
+    if request.method == "POST":
+        # userid = request.POST.get("userId")
+        trend_id = request.POST.get("trend_id")
+        results = list(Dynamic.objects.filter(id=trend_id).values())
+        tags = list(Tag.objects.filter(trend_id=trend_id).values())
+        for result in results:
+            result["tags"] = tags
+        if not results:  # 如果查询结果为空
+            return JsonResponse({"error": 1001, "msg": "暂无动态"})
+
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取动态信息成功",
+                "data": results,
+                # "tags": tags,
+            }
+        )
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_peroson_all_trend(request):
+    if request.method == "POST":
+        userid = request.POST.get("userId")
+        results = list(
+            Dynamic.objects.filter(user_id=userid).values().order_by("-send_date")
+        )
+        for res in results:
+            trend_id = res["id"]  # 获取动态的ID
+            tags = list(Tag.objects.filter(trend_id=trend_id).values())
+            res["tags"] = tags  # 将标签添加到动态中
+        if not results:  # 如果查询结果为空
+            return JsonResponse({"error": 1001, "msg": "该用户暂无动态"})
+
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取动态信息成功",
+                "data": results,
+            }
+        )
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def delete_trend(request):
+    if request.method == "POST":
+        trend_id = request.POST.get("trend_id")
+        dynamic = Dynamic.objects.get(id=trend_id)
+        dynamic.delete()
+        return JsonResponse({"error": 0, "msg": "删除动态成功"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def like_trend(request):
+    if request.method == "POST":
+        trend_id = request.POST.get("trend_id")
+        user_id = request.POST.get("user_id")
+        temp_like = Like.objects.filter(user_id=user_id)
+        if temp_like.exists():
+            return JsonResponse({"error": 1001, "msg": "您已经赞过了"})
+        dynamic = Dynamic.objects.get(id=trend_id)
+        dynamic.like_count = dynamic.like_count + 1
+        dynamic.save()
+        Like.objects.create(trend_id=trend_id, user_id=user_id)
+
+        temp = list(Dynamic.objects.filter(id=trend_id))
+        us = 0
+        for a in temp:
+            us = a.user_id
+        return JsonResponse({"error": 0, "msg": "点赞动态成功"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_trend_like_users(request):
+    if request.method == "POST":
+        trend_id = request.POST.get("trend_id")
+        results = list(Dynamic.objects.filter(id=trend_id).values("id"))
+        users = list(Like.objects.filter(trend_id=trend_id).values())
+        print(users)
+        for result in results:
+            like_applicant_list = []
+            for user in users:
+                us = list(Applicant.objects.filter(id=user["user_id"]).values())
+                like_applicant_list.extend(us)
+            result["like_applicant"] = like_applicant_list
+
+        if not results:  # 如果查询结果为空
+            return JsonResponse({"error": 1001, "msg": "暂无动态"})
+
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取点赞列表成功",
+                "data": results,
+                # "tags": tags,
+            }
+        )
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def delete_like(request):
+    if request.method == "POST":
+        trend_id = request.POST.get("trend_id")
+        user_id = request.POST.get("user_id")
+        simple_like = Like.objects.filter(trend_id=trend_id).filter(user_id=user_id)
+        if not simple_like.exists():
+            return JsonResponse({"error": 1001, "msg": "您没有点赞"})
+        dynamic = Dynamic.objects.get(id=trend_id)
+        dynamic.like_count = dynamic.like_count - 1
+        dynamic.save()
+        simple_like.delete()
+        return JsonResponse({"error": 0, "msg": "取消点赞成功"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def comment_trend(request):
+    if request.method == "POST":
+        trend_id = request.POST.get("trend_id")
+        user_id = request.POST.get("user_id")
+        content = request.POST.get("content")
+        dynamic = Dynamic.objects.get(id=trend_id)
+        dynamic.comment_count = dynamic.comment_count + 1
+        dynamic.save()
+        Comment.objects.create(trend_id=trend_id, user_id=user_id, content=content)
+        return JsonResponse({"error": 0, "msg": "评论动态成功"})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_trend_comments(request):
+    if request.method == "POST":
+        trend_id = request.POST.get("trend_id")
+        results = list(Dynamic.objects.filter(id=trend_id).values("id"))
+        comments = list(Comment.objects.filter(trend_id=trend_id).values())
+        for comment in comments:
+            temp_id = comment["user_id"]
+            comment["user_id"] = list(Applicant.objects.filter(id=temp_id).values())
+        for result in results:
+            result["comments"] = comments
+
+        if not results:  # 如果查询结果为空
+            return JsonResponse({"error": 1001, "msg": "暂无动态"})
+
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取评论列表成功",
+                "data": results,
+                # "tags": tags,
+            }
+        )
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def transport_trend(request):
+    if request.method == "POST":
+        userid = request.POST.get("userId")
+        content = request.POST.get("content")
+        # type = request.POST.get("type")
+        transpond_id = request.POST.get(
+            "transpond_id"
+        )  # 如果不是转发,传0,是的话则转对应动态的id
+        old_trend = list(Dynamic.objects.filter(id=transpond_id).values())
+        print(old_trend)
+        new_trend = Dynamic()
+        new_trend.user_id = userid
+        new_trend.content = content
+        new_trend.type = type
+        new_trend.transpond_id = transpond_id
+        new_trend.save()
+        return JsonResponse({"error": 0, "msg": "转发动态成功", "data": old_trend})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})

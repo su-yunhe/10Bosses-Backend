@@ -121,7 +121,7 @@ def get_single_applicant(request):
                 "data": {
                     "results": results,
                     "interests": interests,
-                }
+                },
             }
         )
     else:
@@ -196,11 +196,15 @@ def search_user(request):
         results = []
         for applicant in applicants:
             if applicant.manage_enterprise_id != 0:
-                manage_enterprise_name = Enterprise.objects.get(id=applicant.manage_enterprise_id).name
+                manage_enterprise_name = Enterprise.objects.get(
+                    id=applicant.manage_enterprise_id
+                ).name
             else:
                 manage_enterprise_name = None
             if applicant.enterprise_id != 0:
-                enterprise_name = Enterprise.objects.get(id=applicant.enterprise_id).name
+                enterprise_name = Enterprise.objects.get(
+                    id=applicant.enterprise_id
+                ).name
             else:
                 enterprise_name = None
             # 构建结果字典
@@ -233,14 +237,11 @@ def upload_pdf(request):
             user_temp.is_upload = True
             user_temp.save()
 
-        return JsonResponse(
-            {"error": 0, "msg": "文件上传成功"}
-        )
+        return JsonResponse({"error": 0, "msg": "文件上传成功"})
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
-# 关注用户
 @csrf_exempt
 def user_follow(request):
     if request.method == "POST":
@@ -269,7 +270,13 @@ def get_all_followee(request):
             user = Applicant.objects.get(id=userid)
             followee = list(user.following.values("id", "user_name"))
             cnt = user.following.count()
-            return JsonResponse({"error": 0, "msg": "获取成功", "data": {"followee": followee, "cnt": cnt}})
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "获取成功",
+                    "data": {"followee": followee, "cnt": cnt},
+                }
+            )
         except Exception as e:
             logger.error(f"Error sending message: {e}")
             return JsonResponse({"error": 500, "msg": "服务器内部错误"})
@@ -286,7 +293,13 @@ def get_all_follower(request):
             user = Applicant.objects.get(id=userid)
             follower = list(user.followers.values("id", "user_name"))
             cnt = user.followers.count()
-            return JsonResponse({"error": 0, "msg": "获取成功", "data": {"follower": follower, "cnt": cnt}})
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "获取成功",
+                    "data": {"follower": follower, "cnt": cnt},
+                }
+            )
         except Exception as e:
             logger.error(f"Error sending message: {e}")
             return JsonResponse({"error": 500, "msg": "服务器内部错误"})
