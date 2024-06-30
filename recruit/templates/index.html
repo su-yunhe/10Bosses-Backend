@@ -49,15 +49,17 @@
             function updateUI() {
                 container.innerHTML = '';
                 data.forEach((item, index) => {
-                    const row = document.createElement('div');
-                    row.className = 'row';
+                    {#const row = document.createElement('div');#}
+                    {#row.className = 'row';#}
 
                     const label = document.createElement('div');
                     label.className = 'label';
                     label.textContent = `${item.recruit_id}: ${item.recruit_number}`;
 
-                    row.appendChild(label);
-                    container.appendChild(row);
+                    container.appendChild(label);
+
+                    {#row.appendChild(label);#}
+                    {#container.appendChild(row);#}
                 });
             }
 
@@ -69,11 +71,15 @@
 
             ws.onmessage = function(event) {
                 console.log('receiving')
-                const { recruit_id, recruit_number } = JSON.parse(event.data).message;
+                {#console.log(JSON.parse(event.data).type)#}
+                const { recruit_id, recruit_number } = JSON.parse(event.data).data;
                 console.log('receive', recruit_id, recruit_number)
                 const item = data.find(x => x.recruit_id === recruit_id);
                 if (item) {
                     item.recruit_number = recruit_number;
+                    if (item.recruit_number==0) {
+                        data.pop(item)
+                    }
                 } else {
                     data.push({ recruit_id, recruit_number });
                 }

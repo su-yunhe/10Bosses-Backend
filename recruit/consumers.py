@@ -4,7 +4,7 @@ from channels.layers import get_channel_layer
 from channels.db import database_sync_to_async
 
 
-class ChatConsumer(AsyncWebsocketConsumer):
+class RecruitConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         print('connected')
         await self.channel_layer.group_add(
@@ -22,8 +22,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         pass
 
-    async def update_message(self, event):
-        print(event['message'])
+    async def update_recruit(self, event):
+        print(event['data'])
         await self.send(text_data=json.dumps({
-            'message': event['message']
+            # 'type': 'update_recruit',
+            'data': event['data']
         }))
+
+    # async def delete_recruit(self, event):
+    #     print(event['data'])
+    #     await self.send(text_data=json.dumps({
+    #         'type': 'delete_recruit',
+    #         'data': event['data']
+    #     }))

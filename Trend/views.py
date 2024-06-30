@@ -50,6 +50,11 @@ def get_person_single_trend(request):
         tags = list(Tag.objects.filter(trend_id=trend_id).values())
         for result in results:
             result["tags"] = tags
+        pic_list = []
+        for result in results:
+            pic = list(TrendPicture.objects.filter(trend_id=trend_id).values())
+            pic_list.extend(pic)
+            result["pics"] = pic_list
         if not results:  # 如果查询结果为空
             return JsonResponse({"error": 1001, "msg": "暂无动态"})
 
@@ -76,6 +81,10 @@ def get_peroson_all_trend(request):
             trend_id = res["id"]  # 获取动态的ID
             tags = list(Tag.objects.filter(trend_id=trend_id).values())
             res["tags"] = tags  # 将标签添加到动态中
+            pic_list = []
+            pic = list(TrendPicture.objects.filter(trend_id=trend_id).values())
+            pic_list.extend(pic)
+            res["pics"] = pic_list
         if not results:  # 如果查询结果为空
             return JsonResponse({"error": 1001, "msg": "该用户暂无动态"})
 
@@ -260,5 +269,25 @@ def transport_trend(request):
         new_trend.transpond_id = transpond_id
         new_trend.save()
         return JsonResponse({"error": 0, "msg": "转发动态成功", "data": old_trend})
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def upload_picture(request):
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        trend_id = request.POST.get("trend_id")
+        pic = request.FILES.get("picture", None)
+        print(pic)
+        trend = Dynamic.objects.get(id=trend_id)
+        if pic:
+            temp = TrendPicture()
+            temp.trend_id = trend_id
+            temp.user_id = user_id
+            temp.picture = pic
+            temp.save()
+
+        return JsonResponse({"error": 0, "msg": "图片上传成功"})
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
