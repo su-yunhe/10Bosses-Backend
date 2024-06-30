@@ -11,6 +11,10 @@ import json
 from Users.models import Applicant, Position
 from recruit.models import Recruit, Material
 
+from django.shortcuts import render
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 
 @csrf_exempt
 def publish_recruitment(request):
@@ -131,6 +135,8 @@ def update_recruitment(request):
             recruit.number = number
             if int(number) == 0:
                 recruit.status = False
+            else:
+                recruit.status = True
         if education:
             recruit.education = education
         if salary_high and salary_low:
@@ -152,6 +158,37 @@ def update_recruitment(request):
             recruit.requirement = requirement
         if address:
             recruit.address = address
+        recruit.save()
+        refresh_recruits({"recruit_id": recruit.id, "recruit_number": recruit.number})
+        return JsonResponse({'error': 0, 'msg': '修改成功'})
+
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def close_recruitment(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        recruit_id = request.POST.get('recruit_id')
+        type = request.POST.get('type')  # True 重新开启  False 关闭
+        # 获取实体
+        if not Applicant.objects.filter(id=user_id).exists():
+             return JsonResponse({'error': 8002, 'msg': "操作用户不存在"})
+        if not Recruit.objects.filter(id=recruit_id).exists():
+            return JsonResponse({'error': 8006, 'msg': "操作招聘不存在"})
+        user = Applicant.objects.get(id=user_id)
+        recruit = Recruit.objects.get(id=recruit_id)
+        # 如果用户不是管理员判断
+        if user.manage_enterprise_id != recruit.enterprise.id:
+            return JsonResponse({'error': 8003, 'msg': "操作用户非管理员"})
+        # 修改招募
+        if not type:
+            recruit.status = False
+        else:
+            recruit.status = True
+            if recruit.number == 0:
+                recruit.number = 1
         recruit.save()
         return JsonResponse({'error': 0, 'msg': '修改成功'})
 
@@ -200,6 +237,8 @@ def user_apply_recruit(request):
         # 验证用户管理员身份
         if user.manage_enterprise_id != 0:
             return JsonResponse({'error': 7004, 'msg': "操作用户是管理员"})
+        if not recruit.status:
+            return JsonResponse({'error': 7004, 'msg': "操作招聘已关闭"})
         # 返回列表
         material = Material.objects.create(recruit=recruit, enterprise=enterprise, information=user.Information)
         if curriculum_vitae:
@@ -323,6 +362,9 @@ def manage_apply_material(request):
         if material.status != 3:
             return JsonResponse({'error': 7004, 'msg': "已被审核"})
         material.status = type
+        if type == 2 and material.recruit:
+            material.recruit.number = material.recruit.number-1
+            refresh_recruits({"recruit_id": material.recruit.id, "recruit_number": material.recruit.number})
         material.save()
         return JsonResponse({'error': 0, 'msg': "已审核"})
 
@@ -447,3 +489,20 @@ def get_intended_recruitment(request):
             # 还没有企业在这些岗位招聘
             return JsonResponse({"error": 1002, "msg": "当前还没有这些岗位的招聘信息"})
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+def refresh_recruits(json):
+    channel_layer = get_channel_layer()
+    print('json: ', json)
+    async_to_sync(channel_layer.group_send)(
+        'recruitment_update',
+        {
+            "type": "update_message",
+            "message": json
+        }
+    )
+    return
+
+
+def index(request):
+    return render(request, 'index.html')

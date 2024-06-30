@@ -16,7 +16,7 @@ class Enterprise(models.Model):
     fan = models.IntegerField(default=0)
     recruitment = models.ManyToManyField(Recruit, related_name='recruitment_belong_enterprise')
     recruit_material = models.ManyToManyField(Material, related_name='recruit_user_material')
-    normal_user_material = models.ManyToManyField(Material, related_name='normal_user_material')
+    withdraw = models.ManyToManyField(Applicant, related_name='withdraw_enterprise')
     manager = models.ForeignKey(Applicant, on_delete=CASCADE, null=True)  # 公司管理人
 
     def __str__(self):
