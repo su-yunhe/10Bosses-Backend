@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,6 +8,7 @@ from recruit.models import *
 from utils.token import create_token
 from .models import *
 import logging
+from notification.models import *
 
 logger = logging.getLogger(__name__)
 
@@ -253,8 +255,20 @@ def user_follow(request):
 
         # if followee in follower.following.all():
         #     return JsonResponse({"error": 1003, "msg": "已关注"})
-
+        us_name = Applicant.objects.get(id=follower_id).user_name
         follower.following.add(followee)
+        temp_note = Notification()
+        temp_note.user_id = followee_id
+        temp_note.title = "新增一位关注者"
+        temp_note.type = 3
+        temp_note.is_read = 0
+        temp_note.message = "您多了一位关注者：" + us_name
+        temp_note.time = datetime.now()
+        temp_note.related_user_id = follower_id
+        try:
+            temp_note.save()
+        except Exception as e:
+            return JsonResponse({"error": 3001, "msg": str(e)})
         return JsonResponse({"error": 0, "msg": "关注成功"})
 
     else:
