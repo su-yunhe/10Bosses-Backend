@@ -11,6 +11,8 @@ import os
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
+import recruit.routing
+import chat.routing
 from recruit import routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ScholarSHIP.settings')
@@ -18,6 +20,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ScholarSHIP.settings')
 # application = get_asgi_application()
 application = ProtocolTypeRouter({
     'websocket': URLRouter(
-        routing.websocket_urlpatterns
+        chat.routing.websocket_urlpatterns,
     ),
 })

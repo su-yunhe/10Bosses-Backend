@@ -7,5 +7,5 @@ urlpatterns = [
     # path("send_message", send_message),
     path("get_conversations", get_conversations),
     path("get_history_messages", get_history_messages),
-    path("read_message", read_message)
+    # path("read_message", read_message)
 ]
