@@ -197,6 +197,18 @@ def recommend_users(request):
         results = list()
         for other_user_id in user_id_set:
             user = Applicant.objects.values().get(id=other_user_id)
+            user_enterprise_id = user["enterprise_id"]
+            user_manage_enterprise_id = user["manage_enterprise_id"]
+            if user_enterprise_id:
+                enterprise_name = Enterprise.objects.get(id=user_enterprise_id).name
+                user["enterprise_name"] = enterprise_name
+            else:
+                user["enterprise_name"] = ""
+            if user_manage_enterprise_id:
+                enterprise_name = Enterprise.objects.get(id=user_enterprise_id).name
+                user["manage_enterprise_name"] = enterprise_name
+            else:
+                user["manage_enterprise_name"] = ""
             results.append(user)
         if results:
             return JsonResponse(
