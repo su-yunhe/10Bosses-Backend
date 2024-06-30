@@ -253,5 +253,5 @@ def get_notification_list3(request):
                 }
             }
         )
-    return JsonResponse({"error": 2002, 'msg': "请求方式错误"})
+    return JsonResponse({"error": 2001, 'msg': "请求方式错误"})
 
