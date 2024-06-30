@@ -14,9 +14,7 @@ class Recruit(models.Model):
     salary_low = models.IntegerField(default=0)  # 最高薪资
     salary_high = models.IntegerField(default=0)  # 最低薪资
     status = models.BooleanField(default=True)  # 招聘状态
-    # user_application = models.ManyToManyField(User, related_name='application_recruit_user')
-    user_material = models.ManyToManyField('Material', related_name='application_material') # 申请材料列表
-    # employment = models.ManyToManyField(User, related_name='employment_recruit_user')
+    user_material = models.ManyToManyField('Material', related_name='application_material')  # 申请材料列表
     release_time = models.DateField(auto_now_add=True)  # 发布时间
     experience = models.CharField(max_length=128, default="无要求")  # 工作经验
     address = models.CharField(max_length=128, default="")  # 工作地点
@@ -30,7 +28,7 @@ class Material(models.Model):
     recruit = models.ForeignKey('Recruit', on_delete=CASCADE, null=True)
     enterprise = models.ForeignKey('enterprise.Enterprise', on_delete=CASCADE, null=True)
     submit_time = models.DateField(auto_now_add=True)  # 发布时间
-    information = models.ForeignKey('Users.Information', on_delete=SET_NULL, null=True)
+    information = models.ForeignKey('Users.Information', on_delete=CASCADE, null=True)
     curriculum_vitae = models.FileField(upload_to='material_curriculum/', blank=True)  # 电子简历
     certificate = models.FileField(upload_to='certificate/', blank=True)  # 证书
 
@@ -40,8 +38,6 @@ class Material(models.Model):
             "material_status": self.status,
             "material_user_id": self.information.user.id,
             "material_user_name": self.information.user.user_name,
-            "material_curriculum_vitae": self.curriculum_vitae.url,
-            "material_certificate": self.certificate.url,
             "user_real_name": self.information.name,
             "user_gender": self.information.gender,
             "user_native_place": self.information.native_place,

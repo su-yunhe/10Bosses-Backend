@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "recruit",
     "Trend",
     "chat",
+    "notification",
 ]
 
 MIDDLEWARE = [
