@@ -45,3 +45,18 @@ class Comment(models.Model):
 
     class Meta:
         db_table = "trend_comments"  # 动态的评论，一对多
+
+
+class TrendPicture(models.Model):
+    id = models.AutoField(primary_key=True)
+    trend_id = models.IntegerField(default=0)
+    user_id = models.IntegerField(default=0)
+    picture = models.ImageField(
+        upload_to="trend_pic/",
+        max_length=225,
+        null=False,
+        default="trend_pic/default.jpg",
+    )  # 设置一个默认路径
+
+    class Meta:
+        db_table = "trend_pictures"  # 动态的图片，一对多
