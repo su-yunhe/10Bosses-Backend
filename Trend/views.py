@@ -12,6 +12,7 @@ from recruit.models import *
 
 from utils.token import create_token
 from .models import *
+from notification.models import *
 
 
 @csrf_exempt
@@ -117,7 +118,20 @@ def like_trend(request):
         us = 0
         for a in temp:
             us = a.user_id
-        return JsonResponse({"error": 0, "msg": "点赞动态成功"})
+        temp_note = Notification()
+        temp_note.user_id = us
+        temp_note.title = "您的动态收到一条点赞"
+        temp_note.type = 1
+        temp_note.is_read = 0
+        temp_note.message = "您的 " + dynamic.content + " 动态收到一条点赞"
+        temp_note.time = datetime.now()
+        temp_note.related_user_id = user_id
+        temp_note.related_blog_id = trend_id
+        try:
+            temp_note.save()
+        except Exception as e:
+            return JsonResponse({"error": 3001, "msg": str(e)})
+        return JsonResponse({"error": 0, "msg": "点赞成功"})
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
