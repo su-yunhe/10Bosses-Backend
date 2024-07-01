@@ -329,12 +329,10 @@ def download_pdf(request):
         file_path = user_temp.note.path
         print(file_path)
         if os.path.exists(file_path):
-            with open(file_path, "rb") as file:
-                response = HttpResponse(file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    f'attachment; filename="{os.path.basename(file_path)}"'
-                )
-                return JsonResponse({"error": 0, "msg": "更新成功", "data": response})
+            download_url = f"/media/person_note/{os.path.basename(file_path)}"  # 假设文件存储在 media 目录下
+            return JsonResponse(
+                {"error": 0, "msg": "更新成功", "data": {"download_url": download_url}}
+            )
         else:
             return JsonResponse({"error": 3001, "msg": "文件不存在"})
     else:
