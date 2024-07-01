@@ -265,6 +265,8 @@ def create_enterprise(request):
         user.save()
         materials = user.user_material.all()
         for ma in materials:
+            if ma.status == 2:
+                ma.recruit.number = ma.recruit.number+1
             ma.delete()
         return JsonResponse({'error': 0, 'data': enterprise.id})
 
@@ -361,6 +363,8 @@ def change_manager(request):     # mark
         enterprise.save()
         materials = user_be_manager.user_material.all()
         for ma in materials:
+            if ma.status == 2:
+                ma.recruit.number = ma.recruit.number+1
             ma.delete()
         return JsonResponse({'error': 0, 'msg': '修改成功'})
 

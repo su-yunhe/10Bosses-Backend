@@ -242,6 +242,8 @@ def user_apply_recruit(request):
         # 返回列表
         if Material.objects.filter(recruit=recruit, information=user.only_information).exists():
             material = Material.objects.get(recruit=recruit, information=user.only_information)
+            if material.status == 2:
+                material.recruit.number = material.recruit.number+1
         else:
             material = Material.objects.create(recruit=recruit, enterprise=enterprise, information=user.only_information)
         if curriculum_vitae:
