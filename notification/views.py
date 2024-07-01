@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from Users.models import Applicant
 from enterprise.models import Enterprise
 from notification.models import Notification
-from recruit.models import Recruit
+from recruit.models import Recruit, Material
 
 
 # 需要实现：
@@ -63,8 +63,10 @@ def resume_notification(request):
     if request.method == 'POST':
         # 需要传入：user
         user_id = request.POST['user_id']
-        recruitment_id = request.POST['recruitment_id']
+        material_id = request.POST['material_id']
         is_passed = request.POST['is_passed']
+        # 获取recruitment
+        recruitment_id = Material.objects.get(id=material_id).recruit.id
         # 获取企业名、岗位名
         enterprise_id = Recruit.objects.get(id=recruitment_id).enterprise_id
         enterprise_name = Enterprise.objects.get(id=enterprise_id).name
@@ -83,7 +85,7 @@ def resume_notification(request):
         notification.type = 4
         notification.message = message
         notification.time = datetime.now()
-        notification.related_recruitment_id = recruitment_id
+        notification.related_material_id = material_id
         notification.attachment = attachment
         notification.save()
         return JsonResponse(
@@ -101,8 +103,10 @@ def user_reply_notification(request):
     if request.method == "POST":
         # 需要传入：用户user_id，招聘recruitment_id，是否同意is_agreed
         user_id = request.POST.get("user_id")
-        recruitment_id = request.POST.get("recruitment_id")
+        material_id = request.POST.get("material_id")
         is_agreed = request.POST.get("is_agreed")
+        # 获取recruitment
+        recruitment_id = Material.objects.get(id=material_id).recruit.id
         # 获取企业管理员
         enterprise_id = Recruit.objects.get(id=recruitment_id).enterprise_id
         manager_id = Enterprise.objects.get(id=enterprise_id).manager_id
@@ -122,7 +126,7 @@ def user_reply_notification(request):
         notification.message = message
         notification.time = datetime.now()
         notification.related_user_id = user_id
-        notification.related_recruitment_id = recruitment_id
+        notification.related_material_id = material_id
         notification.save()
         return JsonResponse(
             {
