@@ -389,6 +389,16 @@ def push_enterprise_trends(request):
         follow_enterprise_trend_list.sort(
             key=lambda entry: entry["send_date"], reverse=True
         )
+        for trend in follow_enterprise_trend_list:
+            owner_id = trend["user_id"]
+            trend["owner_name"] = Applicant.objects.get(id=owner_id).user_name
+            trend_id = trend["id"]  # 获取动态的ID
+            tags = list(Tag.objects.filter(trend_id=trend_id).values())
+            trend["tags"] = tags  # 将标签添加到动态中
+            pic_list = []
+            pic = list(TrendPicture.objects.filter(trend_id=trend_id).values())
+            pic_list.extend(pic)
+            trend["pics"] = pic_list
         return JsonResponse(
             {
                 "error": 0,
@@ -412,6 +422,16 @@ def push_user_trends(request):
             user_trend_list = list(Dynamic.objects.values().filter(user_id=user.id))
             follow_user_trend_list = follow_user_trend_list + user_trend_list
         follow_user_trend_list.sort(key=lambda entry: entry["send_date"], reverse=True)
+        for trend in follow_user_trend_list:
+            owner_id = trend["user_id"]
+            trend["owner_name"] = Applicant.objects.get(id=owner_id).user_name
+            trend_id = trend["id"]  # 获取动态的ID
+            tags = list(Tag.objects.filter(trend_id=trend_id).values())
+            trend["tags"] = tags  # 将标签添加到动态中
+            pic_list = []
+            pic = list(TrendPicture.objects.filter(trend_id=trend_id).values())
+            pic_list.extend(pic)
+            trend["pics"] = pic_list
         return JsonResponse(
             {
                 "error": 0,
