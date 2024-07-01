@@ -410,6 +410,8 @@ def to_json_material(material):
         "material_user_name": information.only_user.user_name,
         "material_recruit_id": material.recruit.id,
         "material_recruit_post": material.recruit.post,
+        "material_curriculum_vitae": material.curriculum_vitae.url,
+        "material_certificate": material.certificate.url,
         "user_real_name": information.name,
         "user_gender": information.gender,
         "user_native_place": information.native_place,
