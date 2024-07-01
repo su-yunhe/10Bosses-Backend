@@ -27,7 +27,7 @@ def trend_add(request):
             "transpond_id"
         )  # 如果不是转发,传0,是的话则转对应动态的id
         tags = request.POST.get("tags")  # 传一个字符串数组
-        print(tags)
+        images = request.FILES.getlist("pictures")
         new_trend = Dynamic()
         new_trend.user_id = userid
         new_trend.content = content
@@ -37,7 +37,12 @@ def trend_add(request):
             new_trend.save()
         except Exception as e:
             print(f"保存失败: {e}")
-        print(1)
+        for image in images:
+            temp = TrendPicture()
+            temp.trend_id = new_trend.id
+            temp.user_id = userid
+            temp.picture = image
+            temp.save()
         for tag in tags:
             print(tag)
             temp = Tag.objects.create(trend_id=new_trend.id, recruit_name=tag)
@@ -307,9 +312,13 @@ def get_enterprise_trends(request):
         # 需要传入：企业enterprise_id
         enterprise_id = request.POST.get("enterprise_id")
         # 获取企业员工
-        enterprise_member_list = list(Enterprise.objects.get(id=enterprise_id).member.all())
+        enterprise_member_list = list(
+            Enterprise.objects.get(id=enterprise_id).member.all()
+        )
         # 根据粉丝数降序排列
-        enterprise_member_list.sort(key=lambda employee: employee.followers.count(), reverse=True)
+        enterprise_member_list.sort(
+            key=lambda employee: employee.followers.count(), reverse=True
+        )
         # 选出前五
         top_five_members = enterprise_member_list[:5]
         enterprise_trend_list = list()
@@ -349,6 +358,8 @@ def push_enterprise_trends(request):
         print(user)
         print(user.user_follow_enterprise)
         # 获取用户关注的全部企业
-        user_follow_enterprise_list = list(Applicant.objects.get(id=user_id).user_follow_enterprise.values())
+        user_follow_enterprise_list = list(
+            Applicant.objects.get(id=user_id).user_follow_enterprise.values()
+        )
         print(user_follow_enterprise_list)
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
