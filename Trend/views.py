@@ -342,8 +342,12 @@ def get_enterprise_trends(request):
 def push_enterprise_trends(request):
     # 系统推送用户关注的企业的动态
     if request.method == "POST":
+        print(111)
         # 需要传入：用户user_id
         user_id = request.POST.get("user_id")
+        user = Applicant.objects.get(id=user_id)
+        print(user)
+        print(user.user_follow_enterprise)
         # 获取用户关注的全部企业
         user_follow_enterprise_list = list(Applicant.objects.get(id=user_id).user_follow_enterprise.values())
         print(user_follow_enterprise_list)

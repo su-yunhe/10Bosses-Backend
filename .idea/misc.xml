@@ -3,9 +3,13 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (backend)" />
   </component>
+<<<<<<< HEAD
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (backend)" project-jdk-type="Python SDK" />
+=======
 <<<<<<< Updated upstream
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (backend)" project-jdk-type="Python SDK" />
 =======
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9" project-jdk-type="Python SDK" />
 >>>>>>> Stashed changes
+>>>>>>> 6c7d8dd6acd9717fb035477d0fb2e864d7f125ed
 </project>
