@@ -639,10 +639,10 @@ def user_follow_enterprise(request):
         #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         if not Enterprise.objects.filter(id=enterprise_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+            return JsonResponse({'error': 7004, 'msg': "该公司不存在"})
         enterprise = Enterprise.objects.get(id=enterprise_id)
         if enterprise in user.user_follow_enterprise.all():
-            return JsonResponse({'error': 7002, 'msg': "操作用户已关注过该企业"})
+            return JsonResponse({'error': 7014, 'msg': "操作用户已关注过该企业"})
         user.user_follow_enterprise.add(enterprise)
         enterprise.fans.add(user)
         return JsonResponse({'error': 0, 'msg': "关注成功"})
@@ -664,7 +664,7 @@ def user_cancel_follow_enterprise(request):
             return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         enterprise = Enterprise.objects.get(id=enterprise_id)
         if enterprise not in user.user_follow_enterprise.all():
-            return JsonResponse({'error': 7002, 'msg': "操作用户未关注过该企业"})
+            return JsonResponse({'error': 7015, 'msg': "操作用户未关注过该企业"})
         user.user_follow_enterprise.remove(enterprise)
         enterprise.fans.remove(user)
         return JsonResponse({'error': 0, 'msg': "取消关注成功"})
@@ -679,13 +679,13 @@ def show_user_follow_enterprise(request):
         show_user_id = request.GET.get('show_user_id')
         # 获取实体
         if not Applicant.objects.filter(id=show_user_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+            return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
         user = Applicant.objects.get(id=show_user_id)
         follow_enterprise_list = user.user_follow_enterprise.all()
         data = []
         for enterprise in follow_enterprise_list:
             data.append(to_json_enterprise(enterprise))
-        return JsonResponse({'error': 0, 'msg': "取消关注成功"})
+        return JsonResponse({'error': 0, 'data': data})
 
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
