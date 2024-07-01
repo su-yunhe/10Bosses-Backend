@@ -8,8 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-
+    print(222)
     async def connect(self):
+        print(333)
         self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
         self.conversation_group_name = f'chat_{self.conversation_id}'
 

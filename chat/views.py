@@ -77,9 +77,11 @@ def get_conversations(request):
                 participants = conversation.participants.exclude(id=userid)
                 if participants.exists():
                     other_user = participants.first()
+                    last_message = Message.objects.filter(conversation=conversation).order_by('-timestamp').first()
                     response_data.append({
                         'conversation_id': conversation.id,
-                        'last_message': conversation.last_message,
+                        'last_message': last_message.content if last_message else '',
+                        'last_message_timestamp': last_message.timestamp if last_message else '',
                         'other_user_id': other_user.id,
                         'other_user_name': other_user.user_name
                     })
