@@ -275,7 +275,7 @@ def get_notification_list4(request):
         if not Applicant.objects.filter(id=user_id).exists():
             return JsonResponse({'error': 2004, 'msg': "用户不存在"})
         # 筛选出用户有关私信的通知
-        results = list(Notification.objects.values().filter(user_id=user_id).filter(type__lte=7))
+        results = list(Notification.objects.values().filter(user_id=user_id).filter(type=7))
         results.sort(key=lambda entry: entry["time"], reverse=True)
         return JsonResponse(
             {
