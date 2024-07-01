@@ -1,6 +1,7 @@
 from haystack import indexes
 from .models import Enterprise
 
+
 # whoosh搜索的索引文件
 class EnterpriseIndex(indexes.SearchIndex, indexes.Indexable):
     # text为索引字段
