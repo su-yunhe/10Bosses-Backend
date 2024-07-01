@@ -325,8 +325,10 @@ def get_enterprise_trends(request):
         return JsonResponse(
             {
                 "error": 0,
-                "msg": "获取动态信息成功",
+                "msg": "获取企业动态成功",
                 "data": enterprise_trend_list,
             }
         )
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
