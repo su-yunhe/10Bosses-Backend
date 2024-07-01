@@ -745,6 +745,7 @@ def to_json_member(member):
 
 def to_json_enterprise(enterprise):
     info = {
+        "id": enterprise.id,
         "name": enterprise.name,
         "profile": enterprise.profile,
         "picture": enterprise.picture.url,
