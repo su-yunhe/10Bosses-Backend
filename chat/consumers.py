@@ -4,6 +4,8 @@ from channels.db import database_sync_to_async
 from chat.models import Applicant, Conversation, Message
 import logging
 
+from notification.models import Notification
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,14 +53,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
             content = text_data_json['content']
             await self.handle_send_message(user_id, content)
         elif action == 'read_message':
+            # if ChatConsumer.online_users[self.conversation_group_name] > 1:
             user_id = text_data_json['userId']
             await self.handle_read_message(user_id)
 
     async def handle_send_message(self, user_id, content):
         sender = await self.get_applicant(user_id)
         conversation = await self.get_conversation(self.conversation_id)
-
         message = await self.create_message(sender, conversation, content)
+        await self.message_notification(sender, content)
 
         await self.channel_layer.group_send(
             self.conversation_group_name,
@@ -74,13 +77,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def handle_read_message(self, user_id):
         await self.mark_messages_as_read(user_id, self.conversation_id)
 
-        await self.channel_layer.group_send(
-            self.conversation_group_name,
-            {
-                'type': 'messages_read',
-                'user_id': user_id,
-            }
-        )
+        if ChatConsumer.online_users[self.conversation_group_name] > 1:
+            await self.channel_layer.group_send(
+                self.conversation_group_name,
+                {
+                    'type': 'messages_read',
+                    'user_id': user_id,
+                }
+            )
+        else:
+            await self.channel_layer.group_send(
+                self.conversation_group_name,
+                {
+                    'type': 'messages_read_single',
+                    'user_id': user_id,
+                }
+            )
 
     async def chat_message(self, event):
         message = event['message']
@@ -96,14 +108,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'message_id': message_id,
         }))
         # 检查当前聊天室是否有多个在线用户
-        if ChatConsumer.online_users[self.conversation_group_name] > 1:
-            await self.handle_read_message(sender)
+        # if ChatConsumer.online_users[self.conversation_group_name] > 1:
+        await self.handle_read_message(sender)
 
     async def messages_read(self, event):
         user_id = event['user_id']
 
         await self.send(text_data=json.dumps({
             'action': 'messages_read',
+            'user_id': user_id,
+        }))
+
+    async def messages_read_single(self, event):
+        user_id = event['user_id']
+
+        await self.send(text_data=json.dumps({
+            'action': 'messages_read_single',
             'user_id': user_id,
         }))
 
@@ -128,3 +148,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for message in messages:
             message.is_read = True
             message.save()
+
+    @database_sync_to_async
+    def message_notification(self, sender, content):
+        print("handle notification")
+        conversations = Conversation.objects.get(id=self.conversation_id)
+        user = list(conversations.participants.exclude(id=sender.id).values())
+        try:
+            # 构建消息实体
+            notification = Notification()
+            notification.user_id = user[0]["id"]
+            notification.title = f"{sender.user_name}发来一个消息"
+            notification.type = 7
+            notification.message = content
+            notification.is_read = 0
+            notification.related_user_id = sender.id
+            notification.save()
+            print("finish")
+        except Exception as e:
+            print(f"Error sending message: {e}")
