@@ -701,7 +701,7 @@ def check_user_follow_enterprise(request):
         #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
         user = Applicant.objects.get(id=user_id)
         if not Enterprise.objects.filter(id=enterprise_id).exists():
-            return JsonResponse({'error': 7002, 'msg': "操作企业不存在"})
+            return JsonResponse({'error': 7004, 'msg': "该公司不存在"})
         enterprise = Enterprise.objects.get(id=enterprise_id)
         if enterprise in user.user_follow_enterprise.all():
             return JsonResponse({'error': 0, 'msg': "用户关注了该企业"})
@@ -714,7 +714,7 @@ def check_user_be_member(request):
     if request.method == "GET":
         # 获取请求内容
         user_id = request.GET.get('user_id')
-        enterprise_id = request.GET.get('enterprise_id')
+        enterprise_id = int(request.GET.get('enterprise_id'))
         # 获取实体
         # if not Applicant.objects.filter(id=user_id).exists():
         #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
