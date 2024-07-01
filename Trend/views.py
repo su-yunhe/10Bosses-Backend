@@ -26,7 +26,7 @@ def trend_add(request):
         transpond_id = request.POST.get(
             "transpond_id"
         )  # 如果不是转发,传0,是的话则转对应动态的id
-        tags = request.POST.get("tags")  # 传一个字符串数组
+        tags = request.POST.getlist("tags")  # 传一个字符串数组
         images = request.FILES.getlist("pictures")
         new_trend = Dynamic()
         new_trend.user_id = userid
@@ -55,10 +55,13 @@ def trend_add(request):
 @csrf_exempt
 def get_person_single_trend(request):
     if request.method == "POST":
-        # userid = request.POST.get("userId")
+        userid = request.POST.get("userId")
         trend_id = request.POST.get("trend_id")
         results = list(Dynamic.objects.filter(id=trend_id).values())
         tags = list(Tag.objects.filter(trend_id=trend_id).values())
+        us_name = Applicant.objects.get(id=userid).user_name
+        for result in results:
+            result["user_name"] = us_name
         for result in results:
             result["tags"] = tags
         pic_list = []
@@ -354,26 +357,38 @@ def push_enterprise_trends(request):
         # 需要传入：用户user_id
         user_id = request.POST.get("user_id")
         # 获取用户关注的全部企业
-        user_follow_enterprise_list = list(Applicant.objects.get(id=user_id).user_follow_enterprise.all())
+        user_follow_enterprise_list = list(
+            Applicant.objects.get(id=user_id).user_follow_enterprise.all()
+        )
         follow_enterprise_trend_list = list()
         for enterprise in user_follow_enterprise_list:
-            enterprise_member_list = list(Enterprise.objects.get(id=enterprise.id).member.all())
+            enterprise_member_list = list(
+                Enterprise.objects.get(id=enterprise.id).member.all()
+            )
             # 根据粉丝数降序排列
-            enterprise_member_list.sort(key=lambda employee: employee.followers.count(), reverse=True)
+            enterprise_member_list.sort(
+                key=lambda employee: employee.followers.count(), reverse=True
+            )
             # 选出前五
             top_five_members = enterprise_member_list[:5]
             enterprise_trend_list = list()
             for member in top_five_members:
-                member_trend_list = list(Dynamic.objects.values().filter(user_id=member.id))
+                member_trend_list = list(
+                    Dynamic.objects.values().filter(user_id=member.id)
+                )
                 enterprise_trend_list = enterprise_trend_list + member_trend_list
-            follow_enterprise_trend_list = follow_enterprise_trend_list + enterprise_trend_list
+            follow_enterprise_trend_list = (
+                follow_enterprise_trend_list + enterprise_trend_list
+            )
         for trend in follow_enterprise_trend_list:
             # 添加动态所属企业
             trend_owner_id = trend["user_id"]
             owner_enterprise_id = Applicant.objects.get(id=trend_owner_id).enterprise_id
             owner_enterprise_name = Enterprise.objects.get(id=owner_enterprise_id).name
             trend["owner_enterprise_name"] = owner_enterprise_name
-        follow_enterprise_trend_list.sort(key=lambda entry: entry["send_date"], reverse=True)
+        follow_enterprise_trend_list.sort(
+            key=lambda entry: entry["send_date"], reverse=True
+        )
         return JsonResponse(
             {
                 "error": 0,
@@ -387,7 +402,7 @@ def push_enterprise_trends(request):
 @csrf_exempt
 def push_user_trends(request):
     # 系统推送用户关注的企业的动态
-    if request.method == 'POST':
+    if request.method == "POST":
         # 需要传入：用户user_id
         user_id = request.POST.get("user_id")
         # 获取用户关注列表
