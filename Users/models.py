@@ -19,6 +19,7 @@ class Applicant(models.Model):
     only_information = models.ForeignKey('Information', on_delete=CASCADE, null=True)
     user_information_enterprise = models.ForeignKey('enterprise.UserInformationEnterprise', on_delete=SET_NULL, null=True)
     user_material = models.ManyToManyField('recruit.Material', related_name='user_all_material')
+    user_follow_enterprise = models.ManyToManyField('enterprise.Enterprise', related_name='user_follow_enterprise')
 
     class Meta:
         db_table = "applicant_info"

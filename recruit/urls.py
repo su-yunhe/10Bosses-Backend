@@ -14,6 +14,10 @@ urlpatterns = [
     path("show_user_material", show_user_material),  # 查看用户所有简历
     path("show_material_single", show_material_single),  # 查看单个申请材料
     path("manage_apply_material", manage_apply_material),  # 审批简历
+    # path("user_follow_enterprise", user_follow_enterprise),  # 用户关注企业
+    # path("user_cancel_follow_enterprise", user_cancel_follow_enterprise),  # 用户取消关注
+    # path("show_user_follow_enterprise", show_user_follow_enterprise),  # 查看用户关注企业列表
+    # path("check_user_follow_enterprise", check_user_follow_enterprise),  # 检查是否用户关注企业
     path("recruitment_search", recruitment_search),  # 搜索岗位
     path("get_intended_recruitment", get_intended_recruitment),  # 获取用户感兴趣的招聘
 
