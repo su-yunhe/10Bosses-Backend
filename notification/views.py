@@ -204,6 +204,7 @@ def get_notification_list1(request):
             return JsonResponse({'error': 2004, 'msg': "用户不存在"})
         # 筛选出用户有关点赞、评论、转发的通知
         results = list(Notification.objects.values().filter(user_id=user_id).filter(type__lte=3))
+        results.sort(key=lambda entry: entry["time"], reverse=True)
         return JsonResponse(
             {
                 "error": 0,
@@ -226,6 +227,7 @@ def get_notification_list2(request):
             return JsonResponse({'error': 2004, 'msg': "用户不存在"})
         # 筛选出用户企业通知
         results = list(Notification.objects.values().filter(user_id=user_id).filter(type=4))
+        results.sort(key=lambda entry: entry["time"], reverse=True)
         return JsonResponse(
             {
                 "error": 0,
@@ -251,6 +253,7 @@ def get_notification_list3(request):
             return JsonResponse({'error': 2005, 'msg': "用户不是管理员"})
         # 筛选出用户企业通知
         results = list(Notification.objects.values().filter(user_id=user_id).filter(type__range=(5, 6)))
+        results.sort(key=lambda entry: entry["time"], reverse=True)
         return JsonResponse(
             {
                 "error": 0,
@@ -273,6 +276,7 @@ def get_notification_list4(request):
             return JsonResponse({'error': 2004, 'msg': "用户不存在"})
         # 筛选出用户有关私信的通知
         results = list(Notification.objects.values().filter(user_id=user_id).filter(type__lte=7))
+        results.sort(key=lambda entry: entry["time"], reverse=True)
         return JsonResponse(
             {
                 "error": 0,
