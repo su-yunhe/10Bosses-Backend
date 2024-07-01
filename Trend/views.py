@@ -77,6 +77,7 @@ def get_peroson_all_trend(request):
         results = list(
             Dynamic.objects.filter(user_id=userid).values().order_by("-send_date")
         )
+        print(results)
         for res in results:
             trend_id = res["id"]  # 获取动态的ID
             tags = list(Tag.objects.filter(trend_id=trend_id).values())
@@ -300,7 +301,17 @@ def get_enterprise_trends(request):
         # 需要传入：企业enterprise_id
         enterprise_id = request.POST.get("enterprise_id")
         # 获取企业员工
-        enterprise_member_list = list(Enterprise.objects.values().get(id=enterprise_id))
-        for member in enterprise_member_list:
-            print(member)
+        enterprise_member_list = list(Enterprise.objects.get(id=enterprise_id).member.all())
+        # 根据粉丝数降序排列
+        enterprise_member_list.sort(key=lambda employee: employee.followers.count(), reverse=True)
+        # 选出前五
+        top_five_members = enterprise_member_list[:5]
+        enterprise_trend_list = list()
+        for member in top_five_members:
+            member_trend_list = list(Dynamic.objects.values().filter(user_id=member.id))
+            enterprise_trend_list = enterprise_trend_list + member_trend_list
+        # 根据时间排序
+        enterprise_trend_list.sort(key=lambda entry: entry["send_date"], reverse=True)
+        for trend in enterprise_trend_list:
+            print(trend)
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})

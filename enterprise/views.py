@@ -19,6 +19,7 @@ import json
 from Users.models import Applicant, Position
 from recruit.models import Material, Recruit
 
+
 @csrf_exempt
 def enterprise_search(request):
     if request.method == 'POST':
@@ -46,7 +47,10 @@ def enterprise_search(request):
                 enterprise = Enterprise.objects.values().get(id=enterprise_id)
                 # 通过企业管理员id获取其真实姓名
                 manager_id = Enterprise.objects.get(id=enterprise_id).manager_id
-                manager_name = Applicant.objects.get(id=manager_id).user_name
+                if not manager_id:
+                    manager_name = "暂无管理员"
+                else:
+                    manager_name = Applicant.objects.get(id=manager_id).user_name
                 # 修改字段
                 enterprise["manager_name"] = manager_name
                 del enterprise["manager_id"]
@@ -56,7 +60,6 @@ def enterprise_search(request):
                     rec_enter_id = recruitment["enterprise_id"]
                     enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
                     recruitment["enterprise_name"] = enterprise_name
-                # print(recruitments)
                 results.append({"enterprise": enterprise, "recruitment": recruitments})
             return JsonResponse(
                 {
@@ -97,7 +100,7 @@ def enterprise_search(request):
 
 
 @csrf_exempt
-def whoosh_search(request): # 测试，实际没有被调用过
+def whoosh_search(request):  # 测试，实际没有被调用过
     query = request.POST.get('q', '')
     sqs = SearchQuerySet().filter(content=query)
     search_results = list()
