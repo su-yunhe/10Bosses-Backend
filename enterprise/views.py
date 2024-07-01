@@ -9,7 +9,7 @@ from .models import Enterprise, UserInformationEnterprise
 from recruit.models import Recruit
 from haystack.query import SearchQuerySet
 from ScholarSHIP import settings
-from datetime import date
+from datetime import date, datetime
 
 import base64
 from django.shortcuts import get_object_or_404
@@ -624,6 +624,9 @@ def add_user_information_enterprise(request):
         user_information_enterprise = user.user_information_enterprise
         if post:
             user_information_enterprise.post = post
+        today = datetime.now().date()
+        if datetime.strptime(join_date, '%Y-%m-%d').date() > today:
+            return JsonResponse({'error': 7017, 'msg': "时间设置错误"})
         if join_date:
             user_information_enterprise.join_date = join_date
         user_information_enterprise.save()
