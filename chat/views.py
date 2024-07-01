@@ -16,7 +16,12 @@ logger = logging.getLogger(__name__)
 def open_conversation(request):
     if request.method == "POST":
         sender = Applicant.objects.get(id=request.POST.get("userId"))
-        recipient = get_object_or_404(Applicant, user_name=request.POST.get("recipientName"))  # 获取的是一个Applicant实例对象
+        recipient = Applicant.objects.get(id=request.POST.get("recipientId"))
+
+        enterprise_name = None
+        if recipient.manage_enterprise_id != 0:
+            enterprise_name = Enterprise.objects.get(id=recipient.manage_enterprise_id).name
+
         try:
             # 查看对话是否已创建
             conversation = Conversation.objects.filter(participants=sender).filter(participants=recipient).first()
@@ -28,8 +33,13 @@ def open_conversation(request):
                 conversation.save()
 
             conversation_id = conversation.id
+            recipient_name = recipient.user_name
 
-            return JsonResponse({"error": 0, "msg": "打开对话成功", "data": {"conversation_id": conversation_id}})
+            return JsonResponse({"error": 0, "msg": "打开对话成功", "data": {
+                "conversation_id": conversation_id,
+                "enterprise_name": enterprise_name,
+                "other_user_name": recipient_name,
+            }})
 
         except Exception as e:
             logger.error(f"Error sending message: {e}")
