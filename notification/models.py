@@ -10,7 +10,8 @@ class Notification(models.Model):
         (3, '关注通知'),  # 同点赞
         (4, '企业通知'),  # 关联related_recruitment_id字段，关联投递简历的招聘信息
         (5, '员工退出企业通知'),  # 关联related_user_id字段，关联退出企业的用户
-        (6, '员工同意/拒绝企业通知')  # 关联related_user_id字段和related_recruitment_id字段，关联应聘人和应聘的招聘信息（岗位）
+        (6, '员工同意/拒绝企业通知'),  # 关联related_user_id字段和related_recruitment_id字段，关联应聘人和应聘的招聘信息（岗位）
+        (7, '私信通知')  # 关联related_user_id字段，关联私信来源人
     ]
 
     id = models.AutoField(primary_key=True)

@@ -240,7 +240,10 @@ def user_apply_recruit(request):
         if not recruit.status:
             return JsonResponse({'error': 8008, 'msg': "操作招聘已关闭"})
         # 返回列表
-        material = Material.objects.create(recruit=recruit, enterprise=enterprise, information=user.only_information)
+        if Material.objects.filter(recruit=recruit, information=user.only_information).exists():
+            material = Material.objects.get(recruit=recruit, information=user.only_information)
+        else:
+            material = Material.objects.create(recruit=recruit, enterprise=enterprise, information=user.only_information)
         if curriculum_vitae:
             material.curriculum_vitae = curriculum_vitae
         else:
@@ -249,6 +252,7 @@ def user_apply_recruit(request):
             material.certificate = certificate
         recruit.user_material.add(material)
         enterprise.recruit_material.add(material)
+        material.status = 3
         material.save()
         user.user_material.add(material)
         return JsonResponse({'error': 0, 'data': material.id})

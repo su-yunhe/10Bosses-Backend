@@ -373,3 +373,46 @@ def user_unfollow(request):
 
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def update_information(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        name = request.POST.get('post', None)
+        phone = request.POST.get('profile', None)
+        native_place = request.POST.get('number', None)
+        nationality = request.POST.get('education', None)
+        birthday = request.POST.get('salary_low', None)
+        marriage = request.POST.get('salary_high', None)
+        gender = request.POST.get('address', None)
+        education = request.POST.get('experience', None)
+        school = request.POST.get('requirement', None)
+
+        user = Applicant.objects.get(id=user_id)
+        information = user.only_information
+        if name:
+            information.name = name
+        if phone:
+            information.phone = phone
+        if native_place:
+            information.native_place = native_place
+        if nationality:
+            information.nationality = nationality
+        if birthday:
+            today = datetime.now().date()
+            if datetime.strptime(birthday, '%Y-%m-%d').date() > today:
+                return JsonResponse({'error': 2002, 'msg': "时间设置错误"})
+            information.birthday = birthday
+        if marriage:
+            information.marriage = marriage
+        if gender:
+            information.gender = gender
+        if education:
+            information.education = education
+        if school:
+            information.school = school
+        return JsonResponse({'error': 0, 'msg': '修改成功'})
+
+    return JsonResponse({"error": 8001, "msg": "请求方式错误"})

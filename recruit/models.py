@@ -10,7 +10,9 @@ import json
 def custom_vitae_upload_to(instance, filename):
     now = datetime.now()
 
-    new_filename = f'{instance.id}_vitae_{now.strftime("%Y%m%d%H%M%S")}.pdf'
+    base, ext = os.path.splitext(filename)
+
+    new_filename = f'{instance.id}_vitae_{now.strftime("%Y%m%d%H%M%S")}{ext}'
 
     return os.path.join('material_curriculum/', new_filename)
 
@@ -18,7 +20,9 @@ def custom_vitae_upload_to(instance, filename):
 def custom_certificate_upload_to(instance, filename):
     now = datetime.now()
 
-    new_filename = f'{instance.id}_certificate_{now.strftime("%Y%m%d%H%M%S")}.pdf'
+    base, ext = os.path.splitext(filename)
+
+    new_filename = f'{instance.id}_certificate_{now.strftime("%Y%m%d%H%M%S")}{ext}'
 
     return os.path.join('certificate/', new_filename)
 
