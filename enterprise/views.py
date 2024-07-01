@@ -382,6 +382,9 @@ def delete_enterprise(request):
         users = enterprise.member.all()
         for u in users:
             u.enterprise_id = 0
+            if u.user_information_enterprise:
+                u.user_information_enterprise.delete()
+            u.user_information_enterprise = None
             u.save()
         user.manage_enterprise_id = 0
         user.enterprise_id = 0
