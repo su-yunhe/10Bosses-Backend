@@ -338,3 +338,13 @@ def get_enterprise_trends(request):
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
+@csrf_exempt
+def push_enterprise_trends(request):
+    # 系统推送用户关注的企业的动态
+    if request.method == "POST":
+        # 需要传入：用户user_id
+        user_id = request.POST.get("user_id")
+        # 获取用户关注的全部企业
+        user_follow_enterprise_list = list(Applicant.objects.get(id=user_id).user_follow_enterprise.values())
+        print(user_follow_enterprise_list)
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})

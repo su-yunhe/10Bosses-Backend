@@ -22,7 +22,7 @@ class Notification(models.Model):
     time = models.DateTimeField(auto_now_add=True)  # 通知时间
     related_user_id = models.IntegerField(null=True, blank=True, default=0)  # 相关用户的ID（如被谁点赞/评论、谁退出企业）
     related_blog_id = models.IntegerField(null=True, blank=True, default=0)  # 相关动态的ID（被点赞/评论动态）
-    related_recruitment_id = models.IntegerField(null=True, blank=True, default=0)  # 相关招聘的ID（企业邀请加入）
+    related_material_id = models.IntegerField(null=True, blank=True, default=0)  # 相关招聘的材料（简历）ID（企业邀请加入）
     attachment = models.CharField(max_length=255, null=True, blank=True, default="")  # 附件路径或URL（暂时为空）
 
     def __str__(self):
