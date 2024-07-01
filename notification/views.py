@@ -71,7 +71,7 @@ def resume_notification(request):
             return JsonResponse(
                 {
                     "error": 0,
-                    "msg": "该用户是管理员"
+                    "msg": "该用户已加入企业"
                 }
             )
         # 获取recruitment
