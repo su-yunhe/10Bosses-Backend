@@ -351,15 +351,57 @@ def get_enterprise_trends(request):
 def push_enterprise_trends(request):
     # 系统推送用户关注的企业的动态
     if request.method == "POST":
-        print(111)
         # 需要传入：用户user_id
         user_id = request.POST.get("user_id")
-        user = Applicant.objects.get(id=user_id)
-        print(user)
-        print(user.user_follow_enterprise)
         # 获取用户关注的全部企业
-        user_follow_enterprise_list = list(
-            Applicant.objects.get(id=user_id).user_follow_enterprise.values()
+        user_follow_enterprise_list = list(Applicant.objects.get(id=user_id).user_follow_enterprise.all())
+        follow_enterprise_trend_list = list()
+        for enterprise in user_follow_enterprise_list:
+            enterprise_member_list = list(Enterprise.objects.get(id=enterprise.id).member.all())
+            # 根据粉丝数降序排列
+            enterprise_member_list.sort(key=lambda employee: employee.followers.count(), reverse=True)
+            # 选出前五
+            top_five_members = enterprise_member_list[:5]
+            enterprise_trend_list = list()
+            for member in top_five_members:
+                member_trend_list = list(Dynamic.objects.values().filter(user_id=member.id))
+                enterprise_trend_list = enterprise_trend_list + member_trend_list
+            follow_enterprise_trend_list = follow_enterprise_trend_list + enterprise_trend_list
+        for trend in follow_enterprise_trend_list:
+            # 添加动态所属企业
+            trend_owner_id = trend["user_id"]
+            owner_enterprise_id = Applicant.objects.get(id=trend_owner_id).enterprise_id
+            owner_enterprise_name = Enterprise.objects.get(id=owner_enterprise_id).name
+            trend["owner_enterprise_name"] = owner_enterprise_name
+        follow_enterprise_trend_list.sort(key=lambda entry: entry["send_date"], reverse=True)
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "推送企业动态成功",
+                "data": follow_enterprise_trend_list,
+            }
         )
-        print(user_follow_enterprise_list)
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def push_user_trends(request):
+    # 系统推送用户关注的企业的动态
+    if request.method == 'POST':
+        # 需要传入：用户user_id
+        user_id = request.POST.get("user_id")
+        # 获取用户关注列表
+        user_follow_user_list = list(Applicant.objects.get(id=user_id).following.all())
+        follow_user_trend_list = list()
+        for user in user_follow_user_list:
+            user_trend_list = list(Dynamic.objects.values().filter(user_id=user.id))
+            follow_user_trend_list = follow_user_trend_list + user_trend_list
+        follow_user_trend_list.sort(key=lambda entry: entry["send_date"], reverse=True)
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "推送用户动态成功",
+                "data": follow_user_trend_list,
+            }
+        )
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
