@@ -24,7 +24,7 @@ class Enterprise(models.Model):
     address = models.TextField(default="")
     member = models.ManyToManyField(Applicant, related_name='member_enterprise')
     fans = models.ManyToManyField(Applicant, related_name='user_like_enterprise')
-    fan = models.IntegerField(default=0)
+    # fan = models.IntegerField(default=0)
     recruitment = models.ManyToManyField(Recruit, related_name='recruitment_belong_enterprise')
     recruit_material = models.ManyToManyField(Material, related_name='recruit_user_material')
     withdraw = models.ManyToManyField(Applicant, related_name='withdraw_enterprise')
