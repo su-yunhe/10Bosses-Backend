@@ -76,7 +76,10 @@ def enterprise_search(request):
             for enterprise in enterprise_list:
                 # 通过企业管理员id获取其真实姓名
                 manager_id = enterprise["manager_id"]
-                manager_name = Applicant.objects.get(id=manager_id).user_name
+                if not manager_id:
+                    manager_name = "暂无管理员"
+                else:
+                    manager_name = Applicant.objects.get(id=manager_id).user_name
                 # 修改字段
                 enterprise["manager_name"] = manager_name
                 del enterprise["manager_id"]
@@ -86,7 +89,6 @@ def enterprise_search(request):
                     rec_enter_id = recruitment["enterprise_id"]
                     enterprise_name = Enterprise.objects.get(id=rec_enter_id).name
                     recruitment["enterprise_name"] = enterprise_name
-                # print(recruitments)
                 results.append({"enterprise": enterprise, "recruitment": recruitments})
             return JsonResponse(
                 {

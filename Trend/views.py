@@ -20,18 +20,24 @@ def trend_add(request):
     if request.method == "POST":
         userid = request.POST.get("userId")
         content = request.POST.get("content")
-        type = request.POST.get("type")
+        type = request.POST.get(
+            "type"
+        )  # 类型为固定的三种：技术学习进展、科研成果、项目成果
         transpond_id = request.POST.get(
             "transpond_id"
         )  # 如果不是转发,传0,是的话则转对应动态的id
-        tags = ["C开发", "测试开发", "vue开发"]
+        tags = request.POST.get("tags")  # 传一个字符串数组
         print(tags)
         new_trend = Dynamic()
         new_trend.user_id = userid
         new_trend.content = content
         new_trend.type = type
         new_trend.transpond_id = transpond_id
-        new_trend.save()
+        try:
+            new_trend.save()
+        except Exception as e:
+            print(f"保存失败: {e}")
+        print(1)
         for tag in tags:
             print(tag)
             temp = Tag.objects.create(trend_id=new_trend.id, recruit_name=tag)
@@ -71,7 +77,7 @@ def get_person_single_trend(request):
 
 
 @csrf_exempt
-def get_peroson_all_trend(request):
+def get_person_all_trend(request):
     if request.method == "POST":
         userid = request.POST.get("userId")
         results = list(
@@ -116,7 +122,7 @@ def like_trend(request):
     if request.method == "POST":
         trend_id = request.POST.get("trend_id")
         user_id = request.POST.get("user_id")
-        temp_like = Like.objects.filter(user_id=user_id)
+        temp_like = Like.objects.filter(user_id=user_id).filter(trend_id=trend_id)
         if temp_like.exists():
             return JsonResponse({"error": 1001, "msg": "您已经赞过了"})
         dynamic = Dynamic.objects.get(id=trend_id)
@@ -325,8 +331,10 @@ def get_enterprise_trends(request):
         return JsonResponse(
             {
                 "error": 0,
-                "msg": "获取动态信息成功",
+                "msg": "获取企业动态成功",
                 "data": enterprise_trend_list,
             }
         )
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
