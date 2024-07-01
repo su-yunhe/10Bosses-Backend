@@ -77,13 +77,15 @@ def get_conversations(request):
                 participants = conversation.participants.exclude(id=userid)
                 if participants.exists():
                     other_user = participants.first()
+                    is_manage = other_user.manage_enterprise_id
                     last_message = Message.objects.filter(conversation=conversation).order_by('-timestamp').first()
                     response_data.append({
                         'conversation_id': conversation.id,
                         'last_message': last_message.content if last_message else '',
                         'last_message_timestamp': last_message.timestamp if last_message else '',
                         'other_user_id': other_user.id,
-                        'other_user_name': other_user.user_name
+                        'other_user_name': other_user.user_name,
+                        'is_manage': True if is_manage != 0 else False
                     })
             return JsonResponse({"error": 0, "msg": "成功获取所有对话", "data": response_data})
 
