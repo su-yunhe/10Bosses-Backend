@@ -83,6 +83,7 @@ def get_person_all_trend(request):
         results = list(
             Dynamic.objects.filter(user_id=userid).values().order_by("-send_date")
         )
+        print(results)
         for res in results:
             trend_id = res["id"]  # 获取动态的ID
             tags = list(Tag.objects.filter(trend_id=trend_id).values())
@@ -297,3 +298,43 @@ def upload_picture(request):
         return JsonResponse({"error": 0, "msg": "图片上传成功"})
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_enterprise_trends(request):
+    # 获取企业所有动态
+    if request.method == "POST":
+        # 需要传入：企业enterprise_id
+        enterprise_id = request.POST.get("enterprise_id")
+        # 获取企业员工
+        enterprise_member_list = list(Enterprise.objects.get(id=enterprise_id).member.all())
+        # 根据粉丝数降序排列
+        enterprise_member_list.sort(key=lambda employee: employee.followers.count(), reverse=True)
+        # 选出前五
+        top_five_members = enterprise_member_list[:5]
+        enterprise_trend_list = list()
+        for member in top_five_members:
+            member_trend_list = list(Dynamic.objects.values().filter(user_id=member.id))
+            enterprise_trend_list = enterprise_trend_list + member_trend_list
+        # 根据时间排序
+        enterprise_trend_list.sort(key=lambda entry: entry["send_date"], reverse=True)
+        for trend in enterprise_trend_list:
+            trend_id = trend["id"]  # 获取动态的ID
+            tags = list(Tag.objects.filter(trend_id=trend_id).values())
+            trend["tags"] = tags  # 将标签添加到动态中
+            pic_list = []
+            pic = list(TrendPicture.objects.filter(trend_id=trend_id).values())
+            pic_list.extend(pic)
+            trend["pics"] = pic_list
+        if not enterprise_trend_list:  # 如果查询结果为空
+            return JsonResponse({"error": 3001, "msg": "该企业暂无动态"})
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取企业动态成功",
+                "data": enterprise_trend_list,
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+

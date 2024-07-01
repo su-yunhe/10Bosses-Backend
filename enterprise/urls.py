@@ -15,7 +15,16 @@ urlpatterns = [
     path("delete_enterprise", delete_enterprise),  # 删除企业
     path("show_enterprise_member", show_enterprise_member),  # 展示企业员工名单
     path("show_recruitment_list", show_recruitment_list),  # 展示企业招聘列表
+    path("show_withdraw_list", show_withdraw_list),  # 展示企业退出申请
     path("apply_withdraw", apply_withdraw),  # 用户退出企业
-    path("user_enter_enterprise", user_enter_enterprise)  # 用户进行企业认证
+    path("manage_withdraw", manage_withdraw),  # 管理员同意用户退出
+    path("delete_member", delete_member),  # 管理员主动删除用户
+    path("user_enter_enterprise", user_enter_enterprise),  # 用户进行企业认证
+    path("add_user_information_enterprise", add_user_information_enterprise)  # 用户补充企业个人信息
+
+    # path("user_follow_enterprise", user_follow_enterprise),  # 用户关注企业
+    # path("user_cancel_follow_enterprise", user_cancel_follow_enterprise),  # 用户取消关注
+    # path("show_user_follow_enterprise", show_user_follow_enterprise),  # 查看用户关注企业列表
+    # path("check_user_follow_enterprise", check_user_follow_enterprise),  # 检查是否用户关注企业
     # path("add_enterprise_member", add_enterprise_member),
 ]

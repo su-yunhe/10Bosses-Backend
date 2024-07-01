@@ -109,23 +109,23 @@ def get_history_messages(request):
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
 
 
-# 已读(在打开一个对话后，里面的消息设置为已读)
-@csrf_exempt
-def read_message(request):
-    if request.method == "POST":
-        try:
-            userid = request.POST.get("userId")
-            conversation_id = request.POST.get("conversationId")
-            messages = Message.objects.filter(conversation_id=conversation_id).exclude(sender=userid)
-
-            for message in messages:
-                message.is_read = True
-                message.save()
-
-            return JsonResponse({"error": 0, "msg": "消息已读成功"})
-
-        except Exception as e:
-            logger.error(f"Error sending message: {e}")
-            return JsonResponse({"error": 500, "msg": "服务器内部错误"})
-    else:
-        return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+# # 已读(在打开一个对话后，里面的消息设置为已读)
+# @csrf_exempt
+# def read_message(request):
+#     if request.method == "POST":
+#         try:
+#             userid = request.POST.get("userId")
+#             conversation_id = request.POST.get("conversationId")
+#             messages = Message.objects.filter(conversation_id=conversation_id).exclude(sender=userid)
+#
+#             for message in messages:
+#                 message.is_read = True
+#                 message.save()
+#
+#             return JsonResponse({"error": 0, "msg": "消息已读成功"})
+#
+#         except Exception as e:
+#             logger.error(f"Error sending message: {e}")
+#             return JsonResponse({"error": 500, "msg": "服务器内部错误"})
+#     else:
+#         return JsonResponse({"error": 2001, "msg": "请求方式错误"})

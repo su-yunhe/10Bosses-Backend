@@ -61,7 +61,7 @@ def employee_quit_notification(request):
 def resume_notification(request):
     # 简历通过/不通过后系统给用户发通知
     if request.method == 'POST':
-        # 需要传入：投递人user_id,招聘recruitment_id,是否通过is_passed(boolean)
+        # 需要传入：user
         user_id = request.POST['user_id']
         recruitment_id = request.POST['recruitment_id']
         is_passed = request.POST['is_passed']
@@ -72,8 +72,10 @@ def resume_notification(request):
         is_passed = True if is_passed == "1" else False
         if is_passed:
             message = "您投递在 " + enterprise_name + " 公司 " + position + " 岗位的简历已被通过！管理员邀请您加入企业，请及时进行企业员工认证~"
+            attachment = 1
         else:
             message = "您投递在 " + enterprise_name + " 公司 " + position + " 岗位的简历并未被通过。尝试使用10bosses提供的AI简历优化能提高被企业录用的概率哦~"
+            attachment = 0
         # 构建消息实体
         notification = Notification()
         notification.user_id = user_id
@@ -82,6 +84,7 @@ def resume_notification(request):
         notification.message = message
         notification.time = datetime.now()
         notification.related_recruitment_id = recruitment_id
+        notification.attachment = attachment
         notification.save()
         return JsonResponse(
             {
@@ -185,3 +188,73 @@ def delete_notification(request):
         notification.delete()
         return JsonResponse({"error": 0, "msg": "删除通知成功"})
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_list1(request):
+    # 获取和点赞、评论、关注相关的通知
+    if request.method == "POST":
+        # 需要传入的数据：用户user_id
+        user_id = request.POST.get("user_id")
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 2004, 'msg': "用户不存在"})
+        # 筛选出用户有关点赞、评论、转发的通知
+        results = list(Notification.objects.values().filter(user_id=user_id).filter(type__lte=3))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户消息列表1成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_list2(request):
+    # 获取和企业offer相关的通知
+    if request.method == "POST":
+        # 需要传入的数据：用户user_id
+        user_id = request.POST.get("user_id")
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 2004, 'msg': "用户不存在"})
+        # 筛选出用户企业通知
+        results = list(Notification.objects.values().filter(user_id=user_id).filter(type=4))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户消息列表2成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def get_notification_list3(request):
+    # 企业管理员收到的管理企业方面的通知
+    if request.method == "POST":
+        # 需要传入：用户（即管理员）user_id
+        user_id = request.POST.get("user_id")
+        if not Applicant.objects.filter(id=user_id).exists():
+            return JsonResponse({'error': 2004, 'msg': "用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if not user.manage_enterprise_id:
+            return JsonResponse({'error': 2005, 'msg': "用户不是管理员"})
+        # 筛选出用户企业通知
+        results = list(Notification.objects.values().filter(user_id=user_id).filter(type__gte=5))
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取用户消息列表3成功",
+                "data": {
+                    "results": results
+                }
+            }
+        )
+    return JsonResponse({"error": 2001, 'msg': "请求方式错误"})
+

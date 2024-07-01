@@ -8,14 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
-        self.conversation_id = None
-        self.conversation_group_name = None
 
     async def connect(self):
         self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
         self.conversation_group_name = f'chat_{self.conversation_id}'
+
+        print("进入聊天室")
 
         # Join conversation group
         await self.channel_layer.group_add(
@@ -117,3 +115,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for message in messages:
             message.is_read = True
             message.save()
+
+
