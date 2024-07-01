@@ -8,10 +8,19 @@ logger = logging.getLogger(__name__)
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    online_users = {}
+
     async def connect(self):
         print(333)
         self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
         self.conversation_group_name = f'chat_{self.conversation_id}'
+
+        # 如果聊天室还没有在线用户，则初始化计数器
+        if self.conversation_group_name not in ChatConsumer.online_users:
+            ChatConsumer.online_users[self.conversation_group_name] = 0
+
+        # 用户加入聊天室，在线用户数量加1
+        ChatConsumer.online_users[self.conversation_group_name] += 1
 
         print("进入聊天室")
 
@@ -24,6 +33,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
+        # 用户离开聊天室，在线用户数量减1
+        ChatConsumer.online_users[self.conversation_group_name] -= 1
+
         # Leave conversation group
         await self.channel_layer.group_discard(
             self.conversation_group_name,
@@ -83,8 +95,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'sender': sender,
             'message_id': message_id,
         }))
-        # Mark the message as read immediately after sending it to the user
-        await self.handle_read_message(sender)
+        # 检查当前聊天室是否有多个在线用户
+        if ChatConsumer.online_users[self.conversation_group_name] > 1:
+            await self.handle_read_message(sender)
 
     async def messages_read(self, event):
         user_id = event['user_id']
@@ -115,5 +128,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
         for message in messages:
             message.is_read = True
             message.save()
-
-
