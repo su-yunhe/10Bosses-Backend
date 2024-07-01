@@ -61,7 +61,7 @@ def employee_quit_notification(request):
 def resume_notification(request):
     # 简历通过/不通过后系统给用户发通知
     if request.method == 'POST':
-        # 需要传入：投递人user_id,招聘recruitment_id,是否通过is_passed(boolean)
+        # 需要传入：user
         user_id = request.POST['user_id']
         recruitment_id = request.POST['recruitment_id']
         is_passed = request.POST['is_passed']
