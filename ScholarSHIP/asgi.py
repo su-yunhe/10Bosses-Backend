@@ -8,13 +8,15 @@ https://docs.djangoproject.com/en/3.1/howto/deployment/asgi/
 """
 
 import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ScholarSHIP.settings')
+django.setup()
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 import recruit.routing
 import chat.routing
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ScholarSHIP.settings')
 
 # application = get_asgi_application()
 application = ProtocolTypeRouter({
