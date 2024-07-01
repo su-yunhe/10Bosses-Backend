@@ -13,5 +13,6 @@ urlpatterns = [
     path("delete_like", delete_like),
     path("transport_trend", transport_trend),
     path("upload_picture", upload_picture),
-    path("get_enterprise_trends", get_enterprise_trends)
+    path("get_enterprise_trends", get_enterprise_trends),
+    path("push_enterprise_trends", push_enterprise_trends),
 ]
