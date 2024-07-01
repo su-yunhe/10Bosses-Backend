@@ -392,7 +392,11 @@ def manage_apply_material(request):
         material.status = type
         if type == 2:
             recruit = material.recruit
+            if recruit.number == 0:
+                return JsonResponse({'error': 8013, 'msg': "通过简历已达上限，审核无效"})
             recruit.number = recruit.number-1
+            if recruit.number == 0:
+                recruit.status = False
             recruit.save()
             refresh_recruits(recruit.id, recruit.number)
         material.save()

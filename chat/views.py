@@ -2,8 +2,11 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+
 from chat.models import *
 import logging
+
+from enterprise.models import Enterprise
 
 logger = logging.getLogger(__name__)
 
@@ -77,13 +80,20 @@ def get_conversations(request):
                 participants = conversation.participants.exclude(id=userid)
                 if participants.exists():
                     other_user = participants.first()
+
+                    enterprise_name = None
+                    enterprise_id = other_user.manage_enterprise_id
+                    if enterprise_id != 0:
+                        enterprise_name = Enterprise.objects.get(id=enterprise_id).name
+
                     last_message = Message.objects.filter(conversation=conversation).order_by('-timestamp').first()
                     response_data.append({
                         'conversation_id': conversation.id,
                         'last_message': last_message.content if last_message else '',
                         'last_message_timestamp': last_message.timestamp if last_message else '',
                         'other_user_id': other_user.id,
-                        'other_user_name': other_user.user_name
+                        'other_user_name': other_user.user_name,
+                        'enterprise_name': enterprise_name,
                     })
             return JsonResponse({"error": 0, "msg": "成功获取所有对话", "data": response_data})
 
