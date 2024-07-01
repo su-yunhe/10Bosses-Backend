@@ -544,17 +544,19 @@ def delete_member(request):
             return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
         enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
         if user_id == user_out_id:
-            return JsonResponse({'error': 7010, 'msg': "目标用户是管理员"})
+            return JsonResponse({'error': 7016, 'msg': "目标用户是管理员"})
         # 修改实体
         # if not Applicant.objects.filter(id=user_out_id).exists():
         #     return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
         user_out = Applicant.objects.get(id=user_out_id)
         if user_out not in enterprise.member.all():
-            return JsonResponse({'error': 7007, 'msg': "目标用户非企业成员"})
+            return JsonResponse({'error': 7007, 'msg': "目标用户不在公司内"})
         user_out.user_information_enterprise.delete()
         user_out.user_information_enterprise = None
         user_out.enterprise_id = 0
         user_out.save()
+        if user_out in enterprise.withdraw.all():
+            enterprise.withdraw.remove(user_out)
         enterprise.member.remove(user_out)
         return JsonResponse({'error': 0, 'msg': "已处理"})
 
