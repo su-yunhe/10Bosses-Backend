@@ -313,5 +313,20 @@ def get_enterprise_trends(request):
         # 根据时间排序
         enterprise_trend_list.sort(key=lambda entry: entry["send_date"], reverse=True)
         for trend in enterprise_trend_list:
-            print(trend)
+            trend_id = trend["id"]  # 获取动态的ID
+            tags = list(Tag.objects.filter(trend_id=trend_id).values())
+            trend["tags"] = tags  # 将标签添加到动态中
+            pic_list = []
+            pic = list(TrendPicture.objects.filter(trend_id=trend_id).values())
+            pic_list.extend(pic)
+            trend["pics"] = pic_list
+        if not enterprise_trend_list:  # 如果查询结果为空
+            return JsonResponse({"error": 3001, "msg": "该企业暂无动态"})
+        return JsonResponse(
+            {
+                "error": 0,
+                "msg": "获取动态信息成功",
+                "data": enterprise_trend_list,
+            }
+        )
     return JsonResponse({"error": 2001, "msg": "请求方式错误"})
