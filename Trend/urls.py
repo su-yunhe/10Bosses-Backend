@@ -4,7 +4,7 @@ from .views import *
 urlpatterns = [
     path("trend_add", trend_add),
     path("get_person_single_trend", get_person_single_trend),
-    path("get_peroson_all_trend", get_peroson_all_trend),
+    path("get_person_all_trend", get_person_all_trend),
     path("delete_trend", delete_trend),
     path("like_trend", like_trend),
     path("comment_trend", comment_trend),
