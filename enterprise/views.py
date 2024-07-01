@@ -525,6 +525,38 @@ def manage_withdraw(request):
 
 
 @csrf_exempt
+def delete_member(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        user_out_id = request.POST.get('user_out_id')
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        # 如果用户不是管理员判断
+        if user.manage_enterprise_id == 0:
+            return JsonResponse({'error': 7005, 'msg': "操作用户非管理员"})
+        enterprise = Enterprise.objects.get(id=user.manage_enterprise_id)
+        if user_id == user_out_id:
+            return JsonResponse({'error': 7010, 'msg': "目标用户是管理员"})
+        # 修改实体
+        # if not Applicant.objects.filter(id=user_out_id).exists():
+        #     return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
+        user_out = Applicant.objects.get(id=user_out_id)
+        if user_out not in enterprise.member.all():
+            return JsonResponse({'error': 7007, 'msg': "目标用户非企业成员"})
+        user_out.user_information_enterprise.delete()
+        user_out.user_information_enterprise = None
+        user_out.enterprise_id = 0
+        user_out.save()
+        enterprise.member.remove(user_out)
+        return JsonResponse({'error': 0, 'msg': "已处理"})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
 def user_enter_enterprise(request):
     if request.method == "POST":
         # 获取请求内容
