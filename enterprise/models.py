@@ -10,7 +10,9 @@ from recruit.models import Material, Recruit
 def custom_enterprise_picture_upload_to(instance, filename):
     now = datetime.now()
 
-    new_filename = f'{instance.id}_enterprise_picture_{now.strftime("%Y%m%d%H%M%S")}.pdf'
+    base, ext = os.path.splitext(filename)
+
+    new_filename = f'{instance.id}_enterprise_picture_{now.strftime("%Y%m%d%H%M%S")}{ext}'
 
     return os.path.join('enterprise/', new_filename)
 
