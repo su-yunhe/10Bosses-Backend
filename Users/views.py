@@ -329,12 +329,10 @@ def download_pdf(request):
         file_path = user_temp.note.path
         print(file_path)
         if os.path.exists(file_path):
-            with open(file_path, "rb") as file:
-                response = HttpResponse(file.read(), content_type="application/pdf")
-                response["Content-Disposition"] = (
-                    f'attachment; filename="{os.path.basename(file_path)}"'
-                )
-                return response
+            download_url = f"/media/person_note/{os.path.basename(file_path)}"  # 假设文件存储在 media 目录下
+            return JsonResponse(
+                {"error": 0, "msg": "更新成功", "data": {"download_url": download_url}}
+            )
         else:
             return JsonResponse({"error": 3001, "msg": "文件不存在"})
     else:
@@ -379,16 +377,16 @@ def user_unfollow(request):
 def update_information(request):
     if request.method == "POST":
         # 获取请求内容
-        user_id = request.POST.get('user_id')
-        name = request.POST.get('post', None)
-        phone = request.POST.get('profile', None)
-        native_place = request.POST.get('number', None)
-        nationality = request.POST.get('education', None)
-        birthday = request.POST.get('salary_low', None)
-        marriage = request.POST.get('salary_high', None)
-        gender = request.POST.get('address', None)
-        education = request.POST.get('experience', None)
-        school = request.POST.get('requirement', None)
+        user_id = request.POST.get("user_id")
+        name = request.POST.get("post", None)
+        phone = request.POST.get("profile", None)
+        native_place = request.POST.get("number", None)
+        nationality = request.POST.get("education", None)
+        birthday = request.POST.get("salary_low", None)
+        marriage = request.POST.get("salary_high", None)
+        gender = request.POST.get("address", None)
+        education = request.POST.get("experience", None)
+        school = request.POST.get("requirement", None)
 
         user = Applicant.objects.get(id=user_id)
         information = user.only_information
@@ -402,8 +400,8 @@ def update_information(request):
             information.nationality = nationality
         if birthday:
             today = datetime.now().date()
-            if datetime.strptime(birthday, '%Y-%m-%d').date() > today:
-                return JsonResponse({'error': 2002, 'msg': "时间设置错误"})
+            if datetime.strptime(birthday, "%Y-%m-%d").date() > today:
+                return JsonResponse({"error": 2002, "msg": "时间设置错误"})
             information.birthday = birthday
         if marriage:
             information.marriage = marriage
@@ -413,6 +411,6 @@ def update_information(request):
             information.education = education
         if school:
             information.school = school
-        return JsonResponse({'error': 0, 'msg': '修改成功'})
+        return JsonResponse({"error": 0, "msg": "修改成功"})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})

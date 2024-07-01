@@ -65,6 +65,15 @@ def resume_notification(request):
         user_id = request.POST['user_id']
         material_id = request.POST['material_id']
         is_passed = request.POST['is_passed']
+        # 判断是否已经加入企业
+        user = Applicant.objects.get(id=user_id)
+        if user.enterprise_id:
+            return JsonResponse(
+                {
+                    "error": 0,
+                    "msg": "该用户已加入企业"
+                }
+            )
         # 获取recruitment
         recruitment_id = Material.objects.get(id=material_id).recruit.id
         # 获取企业名、岗位名
