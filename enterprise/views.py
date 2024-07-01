@@ -628,6 +628,103 @@ def add_user_information_enterprise(request):
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
+@csrf_exempt
+def user_follow_enterprise(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        enterprise_id = request.POST.get('enterprise_id')
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if not Enterprise.objects.filter(id=enterprise_id).exists():
+            return JsonResponse({'error': 7004, 'msg': "该公司不存在"})
+        enterprise = Enterprise.objects.get(id=enterprise_id)
+        if enterprise in user.user_follow_enterprise.all():
+            return JsonResponse({'error': 7014, 'msg': "操作用户已关注过该企业"})
+        user.user_follow_enterprise.add(enterprise)
+        enterprise.fans.add(user)
+        return JsonResponse({'error': 0, 'msg': "关注成功"})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def user_cancel_follow_enterprise(request):
+    if request.method == "POST":
+        # 获取请求内容
+        user_id = request.POST.get('user_id')
+        enterprise_id = request.POST.get('enterprise_id')
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if not Enterprise.objects.filter(id=enterprise_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        enterprise = Enterprise.objects.get(id=enterprise_id)
+        if enterprise not in user.user_follow_enterprise.all():
+            return JsonResponse({'error': 7015, 'msg': "操作用户未关注过该企业"})
+        user.user_follow_enterprise.remove(enterprise)
+        enterprise.fans.remove(user)
+        return JsonResponse({'error': 0, 'msg': "取消关注成功"})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def show_user_follow_enterprise(request):
+    if request.method == "GET":
+        # 获取请求内容
+        show_user_id = request.GET.get('show_user_id')
+        # 获取实体
+        if not Applicant.objects.filter(id=show_user_id).exists():
+            return JsonResponse({'error': 7006, 'msg': "目标用户不存在"})
+        user = Applicant.objects.get(id=show_user_id)
+        follow_enterprise_list = user.user_follow_enterprise.all()
+        data = []
+        for enterprise in follow_enterprise_list:
+            data.append(to_json_enterprise(enterprise))
+        return JsonResponse({'error': 0, 'data': data})
+
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def check_user_follow_enterprise(request):
+    if request.method == "GET":
+        # 获取请求内容
+        user_id = request.GET.get('user_id')
+        enterprise_id = request.GET.get('enterprise_id')
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if not Enterprise.objects.filter(id=enterprise_id).exists():
+            return JsonResponse({'error': 7002, 'msg': "操作企业不存在"})
+        enterprise = Enterprise.objects.get(id=enterprise_id)
+        if enterprise in user.user_follow_enterprise.all():
+            return JsonResponse({'error': 0, 'msg': "用户关注了该企业"})
+        return JsonResponse({'error': 0, 'msg': "用户未关注该企业"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
+@csrf_exempt
+def check_user_be_member(request):
+    if request.method == "GET":
+        # 获取请求内容
+        user_id = request.GET.get('user_id')
+        enterprise_id = request.GET.get('enterprise_id')
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if user.enterprise_id == enterprise_id:
+            return JsonResponse({'error': 0, 'msg': "用户是企业成员"})
+        return JsonResponse({'error': 0, 'msg': "用户不是企业成员"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
 def to_json_member(member):
     user_information_enterprise = member.user_information_enterprise
     today = date.today()
@@ -644,6 +741,20 @@ def to_json_member(member):
         "seniority": seniority
     }
     return info
+
+
+def to_json_enterprise(enterprise):
+    info = {
+        "id": enterprise.id,
+        "name": enterprise.name,
+        "profile": enterprise.profile,
+        "picture": enterprise.picture.url,
+        "address": enterprise.address,
+        "manager_id": enterprise.manager.id,
+        "manager_name": enterprise.manager.user_name,
+        "manager_email": enterprise.manager.email}
+    return info
+
 
 
 def to_json_recruit(recruit):

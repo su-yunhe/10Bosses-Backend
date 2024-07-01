@@ -353,3 +353,23 @@ def update_user_interest(request):
 
     else:
         return JsonResponse({"error": 2001, "msg": "请求方式错误"})
+
+
+# 取消关注用户
+@csrf_exempt
+def user_unfollow(request):
+    if request.method == "POST":
+        try:
+            follower_id = request.POST.get("userId")
+            followee_id = request.POST.get("followeeId")
+            follower = Applicant.objects.get(id=follower_id)
+            followee = Applicant.objects.get(id=followee_id)
+            follower.following.remove(followee)
+        except Exception as e:
+            logger.error(f"Error sending message: {e}")
+            return JsonResponse({"error": 500, "msg": "服务器内部错误"})
+
+        return JsonResponse({"error": 0, "msg": "取消关注成功"})
+
+    else:
+        return JsonResponse({"error": 2001, "msg": "请求方式错误"})

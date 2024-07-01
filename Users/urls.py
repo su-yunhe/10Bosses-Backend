@@ -16,4 +16,5 @@ urlpatterns = [
     path("get_all_follower", get_all_follower),
     path("update_user_interest", update_user_interest),
     path("download_pdf", download_pdf),
+    path("user_unfollow", user_unfollow)
 ]
