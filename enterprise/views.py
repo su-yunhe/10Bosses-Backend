@@ -591,6 +591,8 @@ def user_enter_enterprise(request):
             material.status = 6
             recruit = material.recruit
             recruit.number = recruit.number+1
+            if recruit.number == 1:
+                recruit.status = True
             recruit.save()
             refresh_recruits(recruit.id, recruit.number)
         if type == 'accept':
@@ -756,7 +758,6 @@ def to_json_enterprise(enterprise):
         "manager_name": enterprise.manager.user_name,
         "manager_email": enterprise.manager.email}
     return info
-
 
 
 def to_json_recruit(recruit):
