@@ -55,10 +55,13 @@ def trend_add(request):
 @csrf_exempt
 def get_person_single_trend(request):
     if request.method == "POST":
-        # userid = request.POST.get("userId")
+        userid = request.POST.get("userId")
         trend_id = request.POST.get("trend_id")
         results = list(Dynamic.objects.filter(id=trend_id).values())
         tags = list(Tag.objects.filter(trend_id=trend_id).values())
+        us_name = Applicant.objects.get(id=userid).user_name
+        for result in results:
+            result["user_name"] = us_name
         for result in results:
             result["tags"] = tags
         pic_list = []

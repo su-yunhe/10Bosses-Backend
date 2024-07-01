@@ -12,6 +12,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @csrf_exempt
 def analyze_file(request):
     if request.method == "POST":
@@ -49,7 +50,10 @@ def analyze_file(request):
                     messages = [
                         {"role": "system", "content": "你是 Kimi"},
                         {"role": "system", "content": file_content},
-                        {"role": "user", "content": f"我想要投递{position}岗位，请你帮我优化一下，给出修改建议，谢谢"},
+                        {
+                            "role": "user",
+                            "content": f"我想要投递{position}岗位，请你帮我优化一下，给出修改建议，谢谢",
+                        },
                     ]
                     # 调用 chat-completion
                     completion_response = requests.post(
@@ -65,7 +69,9 @@ def analyze_file(request):
                     if completion_response.status_code == 200:
                         completion = completion_response.json()
                         analysis_result = completion["choices"][0]["message"]
-                        return JsonResponse({"result": analysis_result})
+                        return JsonResponse(
+                            {"error": 0, "msg": "分析成功", "result": analysis_result}
+                        )
                     else:
                         return JsonResponse(
                             {"error": "Error in chat completion API call"}, status=500
