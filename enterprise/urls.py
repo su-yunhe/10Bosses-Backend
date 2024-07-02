@@ -25,7 +25,8 @@ urlpatterns = [
     path("user_cancel_follow_enterprise", user_cancel_follow_enterprise),  # 用户取消关注
     path("show_user_follow_enterprise", show_user_follow_enterprise),  # 查看用户关注企业列表
     path("check_user_follow_enterprise", check_user_follow_enterprise),  # 检查是否用户关注企业
-    path("check_user_be_member", check_user_be_member)  # 检查用户是否是企业成员
+    path("check_user_be_member", check_user_be_member),  # 检查用户是否是企业成员
+    path("check_user_be_manager", check_user_be_manager)  # 检查用户是否是企业成员
 
     # path("add_enterprise_member", add_enterprise_member),
 ]

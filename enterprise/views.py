@@ -745,6 +745,22 @@ def check_user_be_member(request):
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
 
+@csrf_exempt
+def check_user_be_manager(request):
+    if request.method == "GET":
+        # 获取请求内容
+        user_id = request.GET.get('user_id')
+        enterprise_id = int(request.GET.get('enterprise_id'))
+        # 获取实体
+        # if not Applicant.objects.filter(id=user_id).exists():
+        #     return JsonResponse({'error': 7002, 'msg': "操作用户不存在"})
+        user = Applicant.objects.get(id=user_id)
+        if user.manage_enterprise_id == enterprise_id:
+            return JsonResponse({'error': 0, 'msg': "用户是管理员"})
+        return JsonResponse({'error': 0, 'msg': "用户不是管理员"})
+    return JsonResponse({"error": 7001, "msg": "请求方式错误"})
+
+
 def to_json_member(member):
     user_information_enterprise = member.user_information_enterprise
     today = date.today()
