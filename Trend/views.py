@@ -22,12 +22,27 @@ def trend_add(request):
         content = request.POST.get("content")
         type = request.POST.get(
             "type"
-        )  # 类型为固定的三种：技术学习进展、科研成果、项目成果
+        )  # 类型为固定的三种：技术学习进展、科研成果、项目成果userId
         transpond_id = request.POST.get(
             "transpond_id"
         )  # 如果不是转发,传0,是的话则转对应动态的id
         tags = request.POST.getlist("tags")  # 传一个字符串数组
         images = request.FILES.getlist("pictures")
+        if not images:
+            new_trend = Dynamic()
+            new_trend.user_id = userid
+            new_trend.content = content
+            new_trend.type = type
+            new_trend.transpond_id = transpond_id
+            try:
+                new_trend.save()
+            except Exception as e:
+                print(f"保存失败: {e}")
+            for tag in tags:
+                print(tag)
+                temp = Tag.objects.create(trend_id=new_trend.id, recruit_name=tag)
+                print(temp)
+                return JsonResponse({"error": 0, "msg": "发布动态成功"})
         new_trend = Dynamic()
         new_trend.user_id = userid
         new_trend.content = content
