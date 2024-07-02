@@ -165,6 +165,16 @@ def user_modify_info(request):
         new_background = request.POST.get("background")
         if new_background:
             user.background = new_background
+        real_name = request.POST.get("real_name", None)
+        if real_name:
+            user.only_information.name = real_name
+        school = request.POST.get("school", None)
+        if school:
+            user.only_information.school = school
+        phone = request.POST.get('phone', None)
+        if phone:
+            user.only_information.phone = phone
+        user.only_information.save()
         user.save()
         return JsonResponse({"error": 0, "msg": "修改信息成功"})
     else:
@@ -217,6 +227,9 @@ def search_user(request):
                 "background": applicant.background,
                 "manage_enterprise_name": manage_enterprise_name,
                 "enterprise_name": enterprise_name,
+                "real_name": applicant.only_information.name,
+                "phone": applicant.only_information.phone,
+                "school": applicant.only_information.school
             }
             results.append(result)
 

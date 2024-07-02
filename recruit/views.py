@@ -237,8 +237,8 @@ def user_apply_recruit(request):
         recruit = Recruit.objects.get(id=recruit_id)
         enterprise = Enterprise.objects.get(id=recruit.enterprise.id)
         # 验证用户管理员身份
-        # if user.only_information.name is None:
-        #     return JsonResponse({'error': 8014, 'msg': "个人信息未完善"})
+        if user.only_information.name is None:
+            return JsonResponse({'error': 8014, 'msg': "个人信息未完善"})
         if user.manage_enterprise_id != 0:
             return JsonResponse({'error': 8009, 'msg': "操作用户是管理员"})
         if not recruit.status:
@@ -431,14 +431,9 @@ def to_json_material(material):
         "material_curriculum_vitae": material.curriculum_vitae.url if material.curriculum_vitae.url else None,
         "material_certificate": material.certificate.url if material.certificate else None,
         "user_real_name": information.name,
-        "user_gender": information.gender,
-        "user_native_place": information.native_place,
-        "user_nationality": information.nationality,
-        "user_birthday": information.birthday,
-        "user_marriage": information.marriage,
         "user_email": information.only_user.email,
         "user_phone": information.phone,
-        "user_education": information.education,
+        "user_education": information.only_user.background,
         "user_school": information.school,
 
     })
