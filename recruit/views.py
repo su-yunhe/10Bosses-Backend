@@ -238,7 +238,7 @@ def user_apply_recruit(request):
         enterprise = Enterprise.objects.get(id=recruit.enterprise.id)
         # 验证用户管理员身份
         if user.only_information.name is None:
-            return JsonResponse({'error': 8014, 'msg': "个人信息未完善"})
+            return JsonResponse({'error': 8014, 'msg': "个人信息缺失，请前往个人中心完善您的个人信息"})
         if user.manage_enterprise_id != 0:
             return JsonResponse({'error': 8009, 'msg': "操作用户是管理员"})
         if not recruit.status:
