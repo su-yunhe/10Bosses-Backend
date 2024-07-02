@@ -115,7 +115,14 @@ def get_single_applicant(request):
         interests = list(Position.objects.filter(user_id=userid).values())
         if not results:  # 如果查询结果为空
             return JsonResponse({"error": 1001, "msg": "查无此人"})
-
+        applicant = Applicant.objects.get(id=userid)
+        additional_data = {
+            "real_name": applicant.only_information.name,
+            "phone": applicant.only_information.phone,
+            "school": applicant.only_information.school
+        }
+        for result in results:
+            result.update(additional_data)
         return JsonResponse(
             {
                 "error": 0,
@@ -226,10 +233,7 @@ def search_user(request):
                 "email": applicant.email,
                 "background": applicant.background,
                 "manage_enterprise_name": manage_enterprise_name,
-                "enterprise_name": enterprise_name,
-                "real_name": applicant.only_information.name,
-                "phone": applicant.only_information.phone,
-                "school": applicant.only_information.school
+                "enterprise_name": enterprise_name
             }
             results.append(result)
 
