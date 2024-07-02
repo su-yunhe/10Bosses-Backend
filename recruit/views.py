@@ -87,9 +87,11 @@ def show_recruitment(request):
         if not Recruit.objects.filter(id=recruit_id).exists():
             return JsonResponse({'error': 8006, 'msg': "操作招聘不存在"})
         recruit = Recruit.objects.get(id=recruit_id)
+        enterprise = recruit.enterprise
         # 返回信息
-        data = {"enterprise_id": recruit.enterprise.id, "enterprise_name": recruit.enterprise.name,
-                "enterprise_manager_id": recruit.enterprise.manager.id, "enterprise_manager_name": recruit.enterprise.manager.user_name,
+        data = {"enterprise_id": enterprise.id, "enterprise_name": enterprise.name,
+                "enterprise_manager_id": enterprise.manager.id, "enterprise_manager_name": enterprise.manager.user_name,
+                "member_count": enterprise.member.count(), "fans_count": enterprise.fans.count(),
                 "recruit_id": recruit.id, "recruit_post": recruit.post, "recruit_profile": recruit.profile, "recruit_status": recruit.status,
                 "recruit_number": recruit.number, "recruit_release_time": recruit.release_time, "recruit_education": recruit.education,
                 "salary_low": recruit.salary_low, "salary_high": recruit.salary_high, "address": recruit.address, "experience": recruit.experience, "requirement": recruit.requirement}
@@ -235,6 +237,8 @@ def user_apply_recruit(request):
         recruit = Recruit.objects.get(id=recruit_id)
         enterprise = Enterprise.objects.get(id=recruit.enterprise.id)
         # 验证用户管理员身份
+        if user.only_information.name is None:
+            return JsonResponse({'error': 8014, 'msg': "个人信息缺失，请前往个人中心完善您的个人信息"})
         if user.manage_enterprise_id != 0:
             return JsonResponse({'error': 8009, 'msg': "操作用户是管理员"})
         if not recruit.status:
@@ -294,7 +298,7 @@ def show_enterprise_recruit_material(request):
             for ma in materials:
                 if int(ma.status) == type:
                     ma_info.append(to_json_material(ma))
-        return JsonResponse({'error': 0, 'data': ma_info})
+        return JsonResponse({'error': 0, 'data': ma_info, 'msg': len(ma_info)})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
@@ -327,7 +331,7 @@ def show_recruit_material(request):
             for ma in materials:
                 if int(ma.status) == type:
                     ma_info.append(to_json_material(ma))
-        return JsonResponse({'error': 0, 'data': ma_info})
+        return JsonResponse({'error': 0, 'data': ma_info, 'msg': len(ma_info)})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
@@ -353,7 +357,7 @@ def show_user_material(request):
             for ma in materials:
                 if int(ma.status) == type:
                     ma_info.append(to_json_material(ma))
-        return JsonResponse({'error': 0, 'data': ma_info})
+        return JsonResponse({'error': 0, 'data': ma_info, 'msg': len(ma_info)})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
@@ -427,14 +431,9 @@ def to_json_material(material):
         "material_curriculum_vitae": material.curriculum_vitae.url if material.curriculum_vitae.url else None,
         "material_certificate": material.certificate.url if material.certificate else None,
         "user_real_name": information.name,
-        "user_gender": information.gender,
-        "user_native_place": information.native_place,
-        "user_nationality": information.nationality,
-        "user_birthday": information.birthday,
-        "user_marriage": information.marriage,
         "user_email": information.only_user.email,
         "user_phone": information.phone,
-        "user_education": information.education,
+        "user_education": information.only_user.background,
         "user_school": information.school,
 
     })

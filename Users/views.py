@@ -115,7 +115,14 @@ def get_single_applicant(request):
         interests = list(Position.objects.filter(user_id=userid).values())
         if not results:  # 如果查询结果为空
             return JsonResponse({"error": 1001, "msg": "查无此人"})
-
+        applicant = Applicant.objects.get(id=userid)
+        additional_data = {
+            "real_name": applicant.only_information.name,
+            "phone": applicant.only_information.phone,
+            "school": applicant.only_information.school
+        }
+        for result in results:
+            result.update(additional_data)
         return JsonResponse(
             {
                 "error": 0,
@@ -165,6 +172,16 @@ def user_modify_info(request):
         new_background = request.POST.get("background")
         if new_background:
             user.background = new_background
+        real_name = request.POST.get("real_name", None)
+        if real_name:
+            user.only_information.name = real_name
+        school = request.POST.get("school", None)
+        if school:
+            user.only_information.school = school
+        phone = request.POST.get('phone', None)
+        if phone:
+            user.only_information.phone = phone
+        user.only_information.save()
         user.save()
         return JsonResponse({"error": 0, "msg": "修改信息成功"})
     else:
@@ -216,7 +233,7 @@ def search_user(request):
                 "email": applicant.email,
                 "background": applicant.background,
                 "manage_enterprise_name": manage_enterprise_name,
-                "enterprise_name": enterprise_name,
+                "enterprise_name": enterprise_name
             }
             results.append(result)
 

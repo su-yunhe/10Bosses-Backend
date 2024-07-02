@@ -131,7 +131,7 @@ def user_reply_notification(request):
         notification = Notification()
         notification.user_id = manager_id
         notification.title = "用户回复"
-        notification.type = 4
+        notification.type = 6
         notification.message = message
         notification.time = datetime.now()
         notification.related_user_id = user_id
