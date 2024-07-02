@@ -298,7 +298,7 @@ def show_enterprise_recruit_material(request):
             for ma in materials:
                 if int(ma.status) == type:
                     ma_info.append(to_json_material(ma))
-        return JsonResponse({'error': 0, 'data': ma_info, 'msg': ma_info.count()})
+        return JsonResponse({'error': 0, 'data': ma_info, 'msg': len(ma_info)})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
@@ -331,7 +331,7 @@ def show_recruit_material(request):
             for ma in materials:
                 if int(ma.status) == type:
                     ma_info.append(to_json_material(ma))
-        return JsonResponse({'error': 0, 'data': ma_info, 'msg': ma_info.count()})
+        return JsonResponse({'error': 0, 'data': ma_info, 'msg': len(ma_info)})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 
@@ -357,7 +357,7 @@ def show_user_material(request):
             for ma in materials:
                 if int(ma.status) == type:
                     ma_info.append(to_json_material(ma))
-        return JsonResponse({'error': 0, 'data': ma_info, 'msg': ma_info.count()})
+        return JsonResponse({'error': 0, 'data': ma_info, 'msg': len(ma_info)})
 
     return JsonResponse({"error": 8001, "msg": "请求方式错误"})
 

@@ -432,7 +432,7 @@ def show_enterprise_member(request):
         for member in members:
             if member.manage_enterprise_id == 0:
                 data.append(to_json_member(member))
-        return JsonResponse({'error': 0, 'data': data, 'msg': data.count()})
+        return JsonResponse({'error': 0, 'data': data, 'msg': len(data)})
 
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
@@ -457,7 +457,7 @@ def show_recruitment_list(request):
             for recruit in recruits:
                 if str(recruit.status) == type:
                     data.append(to_json_recruit(recruit))
-        return JsonResponse({'error': 0, 'data': data, 'msg': data.count()})
+        return JsonResponse({'error': 0, 'data': data, 'msg': len(data)})
 
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
@@ -479,7 +479,7 @@ def show_withdraw_list(request):
         for member in withdraws:
             if member != user:
                 data.append(to_json_member(member))
-        return JsonResponse({'error': 0, 'data': data, 'msg': data.count()})
+        return JsonResponse({'error': 0, 'data': data, 'msg': len(data)})
 
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
@@ -705,7 +705,7 @@ def show_user_follow_enterprise(request):
         data = []
         for enterprise in follow_enterprise_list:
             data.append(to_json_enterprise(enterprise))
-        return JsonResponse({'error': 0, 'data': data, 'msg': data.count()})
+        return JsonResponse({'error': 0, 'data': data, 'msg': len(data)})
 
     return JsonResponse({"error": 7001, "msg": "请求方式错误"})
 
