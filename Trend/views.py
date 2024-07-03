@@ -42,7 +42,7 @@ def trend_add(request):
                 print(tag)
                 temp = Tag.objects.create(trend_id=new_trend.id, recruit_name=tag)
                 print(temp)
-                return JsonResponse({"error": 0, "msg": "发布动态成功"})
+            return JsonResponse({"error": 0, "msg": "发布动态成功"})
         new_trend = Dynamic()
         new_trend.user_id = userid
         new_trend.content = content
